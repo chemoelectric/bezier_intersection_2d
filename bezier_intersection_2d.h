@@ -4,8 +4,8 @@
 // plane, using the symmetric power (s-power) basis and fat-line
 // Bézier clipping.
 //
-// Written in C99 as pure static inline routines in tail-recursive
-// style.
+// Written in C99 as pure (const) static inline routines in
+// tail-recursive style.
 //
 // References
 // ----------
@@ -57,6 +57,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <math.h>
+
+//----------------------------------------------------------------------
 
 #ifndef INTERSECTION_REAL
 #define INTERSECTION_REAL double
@@ -117,6 +119,8 @@ typedef INTERSECTION_REAL intersection_real;
   BEZIER_INTERSECTION_2D_STATIC
 #endif
 
+//----------------------------------------------------------------------
+
 typedef struct
 {
   bool degenerate;
@@ -124,6 +128,8 @@ typedef struct
   intersection_real tp[9];  // p parameters
   intersection_real tq[9];  // q parameters
 } intersection_record;
+
+//----------------------------------------------------------------------
 
 // A point in the plane.
 typedef struct
@@ -147,6 +153,26 @@ typedef struct
   intersection_real t_min;
   intersection_real t_max;
 } intersection_real_quadratic;
+
+typedef struct
+{
+  const size_t nroots;
+  const intersection_real root0;
+  const intersection_real root1;
+  const intersection_real root2;
+  const intersection_real root3;
+} intersection_real_quadratic_roots;
+
+typedef struct
+{
+  const intersection_real_point pt0;
+  const intersection_real_point pt3;
+  const intersection_real_point q1_delta;
+  const intersection_real_point q2_delta;
+  const size_t num_subdivisions;
+} intersection_real_cubic;
+
+//----------------------------------------------------------------------
 
 BEZIER_INTERSECTION_2D_STATICINLINE intersection_real
 intersection_real_nan (void)
@@ -209,6 +235,11 @@ intersection_real_bound_0_1 (const intersection_real x)
              ? (INTERSECTION_REAL_0NE)
              : x));
 }
+
+#define INTERSECTION_REAL_CHOOSE(pred, iftrue, iffalse) \
+  ((pred) ? (iftrue) : (iffalse))
+
+//----------------------------------------------------------------------
 
 BEZIER_INTERSECTION_2D_STATICINLINE intersection_record
 make_intersection_record (const bool degenerate,
@@ -559,15 +590,6 @@ intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
 
   return result;
 }
-
-typedef struct
-{
-  const size_t nroots;
-  const intersection_real root0;
-  const intersection_real root1;
-  const intersection_real root2;
-  const intersection_real root3;
-} intersection_real_quadratic_roots;
 
 BEZIER_INTERSECTION_2D_STATICINLINE const intersection_real_quadratic_roots
 make_intersection_real_quadratic_roots (void)
@@ -979,9 +1001,9 @@ case 0:
 /* Number of sub-intervals required for cubic degree reduction:
  * E_K = ||Q1_delta - Q2_delta|| / (12 * sqrt(3) * K^2) <= tol */
 BEZIER_INTERSECTION_2D_STATICINLINE int
-sp_cubic_subdivisions (intersection_real_point q1_delta,
-                       intersection_real_point q2_delta,
-                       intersection_real tol)
+sp_cubic_subdivisions (const intersection_real_point q1_delta,
+                       const intersection_real_point q2_delta,
+                       const intersection_real tol)
 {
   intersection_real diff_x;
   intersection_real diff_y;
@@ -1065,6 +1087,135 @@ sp_cubic_to_quad_sub (intersection_real_point p0,
   return q;
 }
 
+BEZIER_INTERSECTION_2D_STATICINLINE intersection_real
+bezier_intersection_abs_tol (const intersection_real px0,
+                             const intersection_real py0,
+                             const intersection_real px2,
+                             const intersection_real py2,
+                             const intersection_real qx0,
+                             const intersection_real qy0,
+                             const intersection_real qx2,
+                             const intersection_real qy2,
+                             const intersection_real rel_tol)
+{
+  const intersection_real coord_scale1 =
+    intersection_real_abs (px0);
+  const intersection_real coord_scale2 =
+   (intersection_real_abs (py0) > coord_scale1)
+    ? intersection_real_abs (py0)
+    : coord_scale1;
+    const intersection_real coord_scale3 =
+      (intersection_real_abs (px2) > coord_scale2)
+      ? intersection_real_abs (px2)
+      : coord_scale2;
+    const intersection_real coord_scale4 =
+      (intersection_real_abs (py2) > coord_scale3)
+      ? intersection_real_abs (py2)
+      : coord_scale3;
+    const intersection_real coord_scale5 =
+      (intersection_real_abs (qx0) > coord_scale4)
+      ? intersection_real_abs (qx0)
+      : coord_scale4;
+    const intersection_real coord_scale6 =
+      (intersection_real_abs (qy0) > coord_scale5)
+      ? intersection_real_abs (qy0)
+      : coord_scale5;
+    const intersection_real coord_scale7 =
+      (intersection_real_abs (qx2) > coord_scale6)
+      ? intersection_real_abs (qx2)
+      : coord_scale6;
+    const intersection_real coord_scale8 =
+      (intersection_real_abs (qy2) > coord_scale7)
+      ? intersection_real_abs (qy2)
+      : coord_scale7;
+    return ((coord_scale < INTERSECTION_REAL_0NE)
+            ? rel_tol
+            : (rel_tol * coord_scale));
+}
+
+#if 0
+typedef struct
+{
+  const intersection_real_point pt0;
+  const intersection_real_point pt3;
+  const intersection_real_point q1_delta;
+  const intersection_real_point q2_delta;
+  const size_t num_subdivisions;
+} intersection_real_cubic;
+#endif
+
+BEZIER_INTERSECTION_2D_STATICINLINE intersection_real_cubic
+bezier_intersection_cubic_spower (const bool quadratic,
+                                  const bool spower,
+                                  const intersection_real x0,
+                                  const intersection_real y0,
+                                  const intersection_real x1,
+                                  const intersection_real y1,
+                                  const intersection_real x2,
+                                  const intersection_real y2,
+                                  const intersection_real x3,
+                                  const intersection_real y3,
+                                  const intersection_real abs_tol)
+{
+  //
+  // Convert to cubic s-power form.
+  //
+  // Include a count of how many quadratic subdivisions to construct.
+  //
+
+  if (quadratic)
+    {
+      const intersection_real_point q1_delta = {
+        .x = INTERSECTION_REAL_CHOOSE (spower, x1,
+                                       (INTERSECTION_REAL_TWO * x1)
+                                       - x0 - x2),
+        .y = INTERSECTION_REAL_CHOOSE (spower, y1,
+                                       (INTERSECTION_REAL_TWO * y1)
+                                       - y0 - y2)
+      };
+      const intersection_real_cubic result = {
+        .pt0 = { .x = x0, .y = y0 },
+        .pt3 = { .x = x2, .y = y2 },
+        .q1_delta = q1_delta,
+        .q2_delta = q1_delta,
+        .num_subdivisions = 1
+      };
+      return result;
+    }
+  else
+    {
+      const intersection_real_point q1_delta = {
+        .x = (INTERSECTION_REAL_CHOOSE
+              (spower, x1, ((INTERSECTION_REAL_THREE * x1)
+                            - (INTERSECTION_REAL_TWO * x0)
+                            - x3))),
+        .y = (INTERSECTION_REAL_CHOOSE
+              (spower, y1, ((INTERSECTION_REAL_THREE * y1)
+                            - (INTERSECTION_REAL_TWO * y0)
+                            - y3)))
+      };
+      const intersection_real_point q2_delta = {
+        .x = (INTERSECTION_REAL_CHOOSE
+              (spower, x2, ((INTERSECTION_REAL_THREE * x2)
+                            - x0
+                            - (INTERSECTION_REAL_TWO * x3)))),
+        .y = (INTERSECTION_REAL_CHOOSE
+              (spower, y2, ((INTERSECTION_REAL_THREE * y2)
+                            - y0
+                            - (INTERSECTION_REAL_TWO * y3))))
+      };
+      const intersection_real_cubic result = {
+        .pt0 = { .x = x0, .y = y0 },
+        .pt3 = { .x = x3, .y = y3 },
+        .q1_delta = q1_delta,
+        .q2_delta = q2_delta,
+        .num_subdivisions = (intersection_real_cubic_subdivisions
+                             (q1_delta, q2_delta, abs_tol));
+      };
+      return result;
+    }
+}
+
 /* -------------------------------------------------------------------------
  * Primary Public Entry Point (Static Inline, Pure)
  * ------------------------------------------------------------------------- */
@@ -1093,147 +1244,47 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
                                    (INTERSECTION_DEFAULT_RELTOL));
   else
     {
-      intersection_record accum;
-      intersection_real abs_tol;
-      intersection_real coord_scale;
-      int kp;
-      int kq;
-      int ip;
-      int iq;
+      const intersection_real abs_tol =
+        bezier_intersection_abs_tol (px0, py0, px2, py2,
+                                     qx0, qy0, qx2, qy2,
+                                     rel_tol);
 
-      /* S-power canonical vectors */
+      const intersection_real_cubic p_cubic =
+        bezier_intersection_cubic_spower (p_quadratic, p_spower,
+                                          px0, py0, px1, py1,
+                                          px2, py2, px3, py3, abs_tol);
+      const intersection_real_cubic q_cubic =
+        bezier_intersection_cubic_spower (q_quadratic, q_spower,
+                                          qx0, qy0, qx1, qy1,
+                                          qx2, qy2, qx3, qy3, abs_tol);
+
+
       intersection_real_point p_pt0;
       intersection_real_point p_pt3;
       intersection_real_point p_q1_delta;
       intersection_real_point p_q2_delta;
-
       intersection_real_point q_pt0;
       intersection_real_point q_pt3;
       intersection_real_point q_q1_delta;
       intersection_real_point q_q2_delta;
-
-      accum = empty_intersection_record ();
-
-      /* Compute coordinate scale for relative tolerance conversion */
-      coord_scale = intersection_real_abs (px0);
-      if (intersection_real_abs (py0) > coord_scale)
-        coord_scale = intersection_real_abs (py0);
-      if (intersection_real_abs (px2) > coord_scale)
-        coord_scale = intersection_real_abs (px2);
-      if (intersection_real_abs (py2) > coord_scale)
-        coord_scale = intersection_real_abs (py2);
-      if (intersection_real_abs (qx0) > coord_scale)
-        coord_scale = intersection_real_abs (qx0);
-      if (intersection_real_abs (qy0) > coord_scale)
-        coord_scale = intersection_real_abs (qy0);
-      if (intersection_real_abs (qx2) > coord_scale)
-        coord_scale = intersection_real_abs (qx2);
-      if (intersection_real_abs (qy2) > coord_scale)
-        coord_scale = intersection_real_abs (qy2);
-      if (coord_scale < INTERSECTION_REAL_0NE)
-        coord_scale = INTERSECTION_REAL_0NE;
-      abs_tol = rel_tol * coord_scale;
-
-      /* Convert P to canonical s-power form */
-      if (p_quadratic)
-        {
-          p_pt0.x = px0;
-          p_pt0.y = py0;
-          p_pt3.x = px2;
-          p_pt3.y = py2;
-
-          if (p_spower)
-            {
-              /* px1, py1 is already P1_delta */
-              p_q1_delta.x = px1;
-              p_q1_delta.y = py1;
-            }
-          else {
-            /* Bernstein control point: P1_delta = 2*P1 - P0 - P2 */
-            p_q1_delta.x = INTERSECTION_REAL_TWO * px1 - px0 - px2;
-            p_q1_delta.y = INTERSECTION_REAL_TWO * py1 - py0 - py2;
-          }
-          /* Trivial degree elevation identity: Q1_delta = Q2_delta = P1_delta */
-          p_q2_delta = p_q1_delta;
-          kp = 1;
-        }
-      else {
-        p_pt0.x = px0;
-        p_pt0.y = py0;
-        p_pt3.x = px3;
-        p_pt3.y = py3;
-
-        if (p_spower)
-          {
-            p_q1_delta.x = px1;
-            p_q1_delta.y = py1;
-            p_q2_delta.x = px2;
-            p_q2_delta.y = py2;
-          }
-        else {
-          /* Bernstein cubic:
-           * Q1_delta = 3*P1 - 2*P0 - P3
-           * Q2_delta = 3*P2 - P0 - 2*P3 */
-          p_q1_delta.x = INTERSECTION_REAL_THREE * px1 -
-            INTERSECTION_REAL_TWO * px0 - px3;
-          p_q1_delta.y = INTERSECTION_REAL_THREE * py1 -
-            INTERSECTION_REAL_TWO * py0 - py3;
-          p_q2_delta.x = INTERSECTION_REAL_THREE * px2 - px0 -
-            INTERSECTION_REAL_TWO * px3;
-          p_q2_delta.y = INTERSECTION_REAL_THREE * py2 - py0 -
-            INTERSECTION_REAL_TWO * py3;
-        }
-        kp = sp_cubic_subdivisions (p_q1_delta, p_q2_delta, abs_tol);
-      }
-
-      /* Convert Q to canonical s-power form */
-      if (q_quadratic)
-        {
-          q_pt0.x = qx0;
-          q_pt0.y = qy0;
-          q_pt3.x = qx2;
-          q_pt3.y = qy2;
-
-          if (q_spower)
-            {
-              q_q1_delta.x = qx1;
-              q_q1_delta.y = qy1;
-            }
-          else {
-            q_q1_delta.x = INTERSECTION_REAL_TWO * qx1 - qx0 - qx2;
-            q_q1_delta.y = INTERSECTION_REAL_TWO * qy1 - qy0 - qy2;
-          }
-          q_q2_delta = q_q1_delta;
-          kq = 1;
-        }
-      else {
-        q_pt0.x = qx0;
-        q_pt0.y = qy0;
-        q_pt3.x = qx3;
-        q_pt3.y = qy3;
-
-        if (q_spower)
-          {
-            q_q1_delta.x = qx1;
-            q_q1_delta.y = qy1;
-            q_q2_delta.x = qx2;
-            q_q2_delta.y = qy2;
-          }
-        else {
-          q_q1_delta.x = (INTERSECTION_REAL_THREE * qx1 -
-                          INTERSECTION_REAL_TWO * qx0 - qx3);
-          q_q1_delta.y = (INTERSECTION_REAL_THREE * qy1 -
-                          INTERSECTION_REAL_TWO * qy0 - qy3);
-          q_q2_delta.x = (INTERSECTION_REAL_THREE * qx2 - qx0 -
-                          INTERSECTION_REAL_TWO * qx3);
-          q_q2_delta.y = (INTERSECTION_REAL_THREE * qy2 - qy0 -
-                          INTERSECTION_REAL_TWO * qy3);
-        }
-        kq = sp_cubic_subdivisions (q_q1_delta, q_q2_delta, abs_tol);
-      }
+      int kp;
+      int kq;
+      int ip;
+      int iq;
+      p_pt0 = p_cubic.pt0;
+      p_pt3 = p_cubic.pt3;
+      p_q1_delta = p_cubic.q1_delta;
+      p_q2_delta = p_cubic.q2_delta;
+      kp = p_cubic.num_subdivisions;
+      q_pt0 = q_cubic.pt0;
+      q_pt3 = q_cubic.pt3;
+      q_q1_delta = q_cubic.q1_delta;
+      q_q2_delta = q_cubic.q2_delta;
+      kq = q_cubic.num_subdivisions;
 
       /* Intersect all pairs of quadratic sub-arcs */
-      for (ip = 0; ip < kp && accum.n < 9; ip = ip + 1)
+      intersection_record accum = empty_intersection_record ();
+      for (ip = 0; (ip != kp) * (accum.n != 9); ip += 1)
         {
           intersection_real tp0;
           intersection_real tp1;
@@ -1244,7 +1295,7 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
           p_sub = sp_cubic_to_quad_sub (p_pt0, p_pt3, p_q1_delta,
                                         p_q2_delta, tp0, tp1);
 
-          for (iq = 0; iq < kq && accum.n < 9; iq = iq + 1)
+          for (iq = 0; (iq != kq) * (accum.n != 9); iq += 1)
             {
               intersection_real tq0;
               intersection_real tq1;
