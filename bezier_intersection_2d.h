@@ -1,4 +1,3 @@
-#line 1 "bezier_intersection_2d.h.m4"
 //----------------------------------------------------------------------
 //
 // Intersection of quadratic and cubic parametric splines in the
@@ -50,9 +49,7 @@
 //
 //----------------------------------------------------------------------
 
-#line 72 "bezier_intersection_2d.h.m4"
 
-#line 74
 #ifndef BEZIER_INTERSECTION_2D_H__INCLUDED__
 #define BEZIER_INTERSECTION_2D_H__INCLUDED__
 
@@ -234,86 +231,48 @@ make_intersection_record (const bool degenerate,
                           const size_t n,
                           //
                           const intersection_real tp0,
-#line 254
                           const intersection_real tp1,
-#line 254
                           const intersection_real tp2,
-#line 254
                           const intersection_real tp3,
-#line 254
                           const intersection_real tp4,
-#line 254
                           const intersection_real tp5,
-#line 254
                           const intersection_real tp6,
-#line 254
                           const intersection_real tp7,
-#line 254
                           const intersection_real tp8,
-#line 254
                           //
-#line 258
                           const intersection_real tq0,
-#line 258
                           const intersection_real tq1,
-#line 258
                           const intersection_real tq2,
-#line 258
                           const intersection_real tq3,
-#line 258
                           const intersection_real tq4,
-#line 258
                           const intersection_real tq5,
-#line 258
                           const intersection_real tq6,
-#line 258
                           const intersection_real tq7,
-#line 258
                           const intersection_real tq8)
-#line 261
 {
   const intersection_record result = {
     .degenerate = degenerate,
     .n = n,
 
     .tp[0] = tp0,
-#line 266
     .tp[1] = tp1,
-#line 266
     .tp[2] = tp2,
-#line 266
     .tp[3] = tp3,
-#line 266
     .tp[4] = tp4,
-#line 266
     .tp[5] = tp5,
-#line 266
     .tp[6] = tp6,
-#line 266
     .tp[7] = tp7,
-#line 266
     .tp[8] = tp8,
-#line 266
 
-#line 270
     .tq[0] = tq0,
-#line 270
     .tq[1] = tq1,
-#line 270
     .tq[2] = tq2,
-#line 270
     .tq[3] = tq3,
-#line 270
     .tq[4] = tq4,
-#line 270
     .tq[5] = tq5,
-#line 270
     .tq[6] = tq6,
-#line 270
     .tq[7] = tq7,
-#line 270
     .tq[8] = tq8
-#line 273
   };
   return result;
 }
@@ -364,385 +323,195 @@ intersection_record_add (const intersection_record rec,
     switch (rec.n)
       {
       case 0:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 1:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 2:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 3:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 4:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 5:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 6:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[7],
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[7],
-#line 322
                    rec.tq[8]));
-#line 322
       case 7:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tp[8],
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    tq_bounded,
-#line 322
                    rec.tq[8]));
-#line 322
       case 8:
-#line 322
           return (make_intersection_record
-#line 322
                   (rec.degenerate, rec.n + 1,
-#line 322
                    rec.tp[0],
-#line 322
                    rec.tp[1],
-#line 322
                    rec.tp[2],
-#line 322
                    rec.tp[3],
-#line 322
                    rec.tp[4],
-#line 322
                    rec.tp[5],
-#line 322
                    rec.tp[6],
-#line 322
                    rec.tp[7],
-#line 322
                    tp_bounded,
-#line 322
                    rec.tq[0],
-#line 322
                    rec.tq[1],
-#line 322
                    rec.tq[2],
-#line 322
                    rec.tq[3],
-#line 322
                    rec.tq[4],
-#line 322
                    rec.tq[5],
-#line 322
                    rec.tq[6],
-#line 322
                    rec.tq[7],
-#line 322
                    tq_bounded));
-#line 322
         default:
-#line 346
           return rec;
     }
 }
@@ -927,25 +696,15 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
   switch (accum0.n)
     {
 case 0:
-#line 529
                       case 1:
-#line 529
                       case 2:
-#line 529
                       case 3:
-#line 529
                       case 4:
-#line 529
                       case 5:
-#line 529
                       case 6:
-#line 529
                       case 7:
-#line 529
                       case 8:
-#line 529
                       
-#line 531
  const intersection_real p_span = p.t_max - p.t_min;
  const intersection_real q_span = q.t_max - q.t_min;
 
