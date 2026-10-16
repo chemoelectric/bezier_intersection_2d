@@ -66,6 +66,10 @@ typedef INTERSECTION_REAL intersection_real;
 #define INTERSECTION_DEFAULT_RELTOL 1e-7
 #endif
 
+#ifndef INTERSECTION_DEFAULT_VERYSMALL
+#define INTERSECTION_DEFAULT_VERYSMALL 1e-14
+#endif
+
 #ifndef INTERSECTION_DEFAULT_PADDING
 #define INTERSECTION_DEFAULT_PADDING 1e-12
 #endif
@@ -118,6 +122,16 @@ static inline intersection_real
 intersection_real_abs (const intersection_real x)
 {
   return (x < (intersection_real) 0.0) ? (-x) : x;
+}
+
+static inline intersection_real
+intersection_real_sgn (const intersection_real x)
+{
+  return ((x < (intersection_real) 0.0)
+          ? (intersection_real) (-1.0)
+          : ((x == (intersection_real) 0.0)
+             ? (intersection_real) 0.0
+             : (intersection_real) 1.0));
 }
 
 static inline intersection_real
@@ -631,27 +645,37 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
               const intersection_real c = q0_perp;
 
               /* Compute range of y(v) for 0 <= v <= 1 */
-              intersection_real v_min =
+              const bool a_is_very_small =
+                (intersection_real_abs (a)
+                 <= (intersection_real) INTERSECTION_DEFAULT_VERYSMALL);
+              const intersection_real v_vertex =
+                ((a_is_very_small)
+            ? (intersection_real_sgn (b) * intersection_real_sgn (a)
+               * HUGE_VAL)
+            : (-b / (a + a)));
+              const bool v_vertex_in_interval =
+                (((intersection_real) 0.0 < v_vertex) *
+                 (v_vertex < (intersection_real) 1.0));
+              const intersection_real v_min_0 =
                 intersection_real_min (q0_perp, q2_perp);
-              intersection_real v_max =
+              const intersection_real v_max_0 =
                 intersection_real_max (q0_perp, q2_perp);
-
-              if (intersection_real_abs (a) > (intersection_real) 1e-14)
-                {
-                  intersection_real v_vertex;
-                  v_vertex = -b / (a + a);
-                  if (v_vertex > (intersection_real) 0.0 &&
-                      v_vertex < (intersection_real) 1.0)
-                    {
-                      intersection_real y_vertex;
-                      y_vertex = a * v_vertex * v_vertex + b *
-                                 v_vertex + c;
-                      if (y_vertex < v_min)
-                        v_min = y_vertex;
-                      if (y_vertex > v_max)
-                        v_max = y_vertex;
-                    }
-                }
+              const intersection_real y_vertex =
+                (v_vertex_in_interval)
+           ? ((((a * v_vertex) + b) * v_vertex) + c)
+           : intersection_real_nan ();
+              const intersection_real v_min =
+                ((!v_vertex_in_interval)
+            ? v_min_0
+            : ((y_vertex < v_min_0)
+               ? y_vertex
+               : v_min_0));
+              const intersection_real v_max =
+                ((!v_vertex_in_interval)
+            ? v_max_0
+            : ((v_max_0 < y_vertex)
+               ? y_vertex
+               : v_max_0));
 
               /* Disjoint test: if Q's perpendicular band does not overlap P's fat line */
               if (v_min > d_max || v_max < d_min)
@@ -978,27 +1002,27 @@ sp_cubic_to_quad_sub (intersection_real_point p0,
  * ------------------------------------------------------------------------- */
 
 static inline intersection_record
-spower_intersect (bool p_quadratic, bool p_spower,
-                  intersection_real px0, intersection_real py0,
-                  intersection_real px1, intersection_real py1,
-                  intersection_real px2, intersection_real py2,
-                  intersection_real px3, intersection_real py3,
-                  bool q_quadratic, bool q_spower,
-                  intersection_real qx0, intersection_real qy0,
-                  intersection_real qx1, intersection_real qy1,
-                  intersection_real qx2, intersection_real qy2,
-                  intersection_real qx3, intersection_real qy3,
-                  intersection_real rel_tol)
+bezier_intersection_2d (bool p_quadratic, bool p_spower,
+                        intersection_real px0, intersection_real py0,
+                        intersection_real px1, intersection_real py1,
+                        intersection_real px2, intersection_real py2,
+                        intersection_real px3, intersection_real py3,
+                        bool q_quadratic, bool q_spower,
+                        intersection_real qx0, intersection_real qy0,
+                        intersection_real qx1, intersection_real qy1,
+                        intersection_real qx2, intersection_real qy2,
+                        intersection_real qx3, intersection_real qy3,
+                        intersection_real rel_tol)
 {
   if (rel_tol <= (intersection_real) 0.0)
-    return spower_intersect (p_quadratic, p_spower,
-                             px0, py0, px1, py1,
-                             px2, py2, px3, py3,
-                             q_quadratic, q_spower,
-                             qx0, qy0, qx1, qy1,
-                             qx2, qy2, qx3, qy3,
-                             (intersection_real)
-                             (INTERSECTION_DEFAULT_RELTOL));
+    return bezier_intersection_2d (p_quadratic, p_spower,
+                                   px0, py0, px1, py1,
+                                   px2, py2, px3, py3,
+                                   q_quadratic, q_spower,
+                                   qx0, qy0, qx1, qy1,
+                                   qx2, qy2, qx3, qy3,
+                                   (intersection_real)
+                                   (INTERSECTION_DEFAULT_RELTOL));
   else
     {
       intersection_record accum;
