@@ -515,9 +515,15 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
 {
   switch (accum0.n)
     {
-    case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7: case
-      8:
-
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
 
       const intersection_real p_span = p.t_max - p.t_min;
       const intersection_real q_span = q.t_max - q.t_min;

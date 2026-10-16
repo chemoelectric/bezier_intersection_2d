@@ -342,9 +342,8 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
 {
   switch (accum0.n)
     {
-m4_forloop([:i:],0,8,[:case i: :])
-
-
+m4_forloop([:i:],0,8,[:case i:
+                      :])
  const intersection_real p_span = p.t_max - p.t_min;
  const intersection_real q_span = q.t_max - q.t_min;
 
