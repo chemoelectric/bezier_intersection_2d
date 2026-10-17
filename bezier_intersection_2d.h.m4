@@ -856,53 +856,55 @@ intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
 /* Evaluate cubic curve in s-power basis:
  * C(t) = (1-t)*P0 + t*P3 + (1-t)^2*t*Q1_delta + (1-t)*t^2*Q2_delta */
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_point
-sp_eval_cubic (intersection_real_point p0,
-               intersection_real_point p3,
-               intersection_real_point q1_delta,
-               intersection_real_point q2_delta,
-               intersection_real t)
+intersection_real_eval_cubic (const intersection_real_point p0,
+                              const intersection_real_point p3,
+                              const intersection_real_point q1_delta,
+                              const intersection_real_point q2_delta,
+                              const intersection_real t)
 {
-  intersection_real s;
-  intersection_real b1;
-  intersection_real b2;
-  intersection_real_point pt;
-
-  s = INTERSECTION_REAL_0NE - t;
-  b1 = s * s * t;
-  b2 = s * t * t;
-
-  pt.x = s * p0.x + t * p3.x + b1 * q1_delta.x + b2 * q2_delta.x;
-  pt.y = s * p0.y + t * p3.y + b1 * q1_delta.y + b2 * q2_delta.y;
+  const intersection_real s = INTERSECTION_REAL_0NE - t;
+  const intersection_real b1 = s * s * t;
+  const intersection_real b2 = s * t * t;
+  const intersection_real_point pt = {
+    .x = ((s * p0.x) + (t * p3.x)
+          + (b1 * q1_delta.x) + (b2 * q2_delta.x)),
+    .y = ((s * p0.y) + (t * p3.y)
+          + (b1 * q1_delta.y) + (b2 * q2_delta.y))
+  };
   return pt;
 }
 
 /* Extract optimal approximating quadratic arc for sub-interval [t0, t1] */
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_quadratic
-sp_cubic_to_quad_sub (intersection_real_point p0,
-                      intersection_real_point p3,
-                      intersection_real_point q1_delta,
-                      intersection_real_point q2_delta,
-                      intersection_real t0,
-                      intersection_real t1)
+intersection_real_cubic_to_quad_sub (const intersection_real_point p0,
+                                     const intersection_real_point p3,
+                                     const intersection_real_point q1_delta,
+                                     const intersection_real_point q2_delta,
+                                     const intersection_real t0,
+                                     const intersection_real t1)
 {
-  intersection_real_quadratic q;
-  intersection_real_point mid;
-  intersection_real_point lin_mid;
-
-  q.t_min = t0;
-  q.t_max = t1;
-  q.p0 = sp_eval_cubic (p0, p3, q1_delta, q2_delta, t0);
-  q.p2 = sp_eval_cubic (p0, p3, q1_delta, q2_delta, t1);
-
-  mid = sp_eval_cubic (p0, p3, q1_delta, q2_delta,
-                       INTERSECTION_REAL_HALF * (t0 + t1));
-  lin_mid.x = INTERSECTION_REAL_HALF * (q.p0.x + q.p2.x);
-  lin_mid.y = INTERSECTION_REAL_HALF * (q.p0.y + q.p2.y);
-
-  q.p1_delta.x = INTERSECTION_REAL_FOUR * (mid.x - lin_mid.x);
-  q.p1_delta.y = INTERSECTION_REAL_FOUR * (mid.y - lin_mid.y);
-
-  return q;
+  const intersection_real_point q_p0 =
+    intersection_real_eval_cubic (p0, p3, q1_delta, q2_delta, t0);
+  const intersection_real_point q_p2 =
+    intersection_real_eval_cubic (p0, p3, q1_delta, q2_delta, t1);
+  const intersection_real_point mid =
+    intersection_real_eval_cubic (p0, p3, q1_delta, q2_delta,
+                                  INTERSECTION_REAL_HALF * (t0 + t1));
+  const intersection_real_point lin_mid = {
+    .x = INTERSECTION_REAL_HALF * (q_p0.x + q_p2.x),
+    .y = INTERSECTION_REAL_HALF * (q_p0.y + q_p2.y)
+  };
+  const intersection_real_quadratic result = {
+    .t_min = t0,
+    .t_max = t1,
+    .p0 = q_p0,
+    .p2 = q_p2,
+    .p1_delta = {
+      .x = INTERSECTION_REAL_FOUR * (mid.x - lin_mid.x),
+      .y = INTERSECTION_REAL_FOUR * (mid.y - lin_mid.y)
+    }
+  };
+  return result;
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
@@ -1112,8 +1114,9 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
 
           tp0 = (intersection_real) ip / (intersection_real) kp;
           tp1 = (intersection_real) (ip + 1) / (intersection_real) kp;
-          p_sub = sp_cubic_to_quad_sub (p_pt0, p_pt3, p_q1_delta,
-                                        p_q2_delta, tp0, tp1);
+          p_sub = (intersection_real_cubic_to_quad_sub
+                   (p_pt0, p_pt3, p_q1_delta,
+                    p_q2_delta, tp0, tp1));
 
           for (iq = 0; (iq != kq) * (accum.n != 9); iq += 1)
             {
@@ -1123,11 +1126,12 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
 
               tq0 = (intersection_real) iq / (intersection_real) kq;
               tq1 = (intersection_real) (iq + 1) / (intersection_real) kq;
-              q_sub = sp_cubic_to_quad_sub (q_pt0, q_pt3, q_q1_delta,
-                                            q_q2_delta, tq0, tq1);
+              q_sub = (intersection_real_cubic_to_quad_sub
+                       (q_pt0, q_pt3, q_q1_delta,
+                        q_q2_delta, tq0, tq1));
 
-              accum = intersection_of_two_quadratics (p_sub, q_sub, rel_tol,
-                                                      abs_tol, 0, accum);
+              accum = (intersection_of_two_quadratics
+                       (p_sub, q_sub, rel_tol, abs_tol, 0, accum));
             }
         }
 
