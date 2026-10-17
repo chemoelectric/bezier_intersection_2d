@@ -80,6 +80,10 @@ typedef INTERSECTION_REAL intersection_real;
 #define INTERSECTION_DEFAULT_VERYSMALL 1e-14
 #endif
 
+#ifndef INTERSECTION_REAL_HUGE_VAL
+#define INTERSECTION_REAL_HUGE_VAL HUGE_VAL
+#endif
+
 #ifndef INTERSECTION_DEFAULT_PADDING
 #define INTERSECTION_DEFAULT_PADDING 1e-12
 #endif
@@ -93,15 +97,16 @@ typedef INTERSECTION_REAL intersection_real;
 #endif
 
 #ifndef BEZIER_INTERSECTION_2D_STORAGECLASS
-#  if defined __GNUC__
-#    if defined __STDC_VERSION__ && 201710L < __STDC_VERSION__
-#      define BEZIER_INTERSECTION_2D_STORAGECLASS [[gnu::const]] static inline
-#    else
-#      define BEZIER_INTERSECTION_2D_STORAGECLASS __attribute__((__const__)) static inline
-#    endif
-#  else
-#    define BEZIER_INTERSECTION_2D_STORAGECLASS static inline
-#  endif
+#if defined __GNUC__
+#if defined __STDC_VERSION__ && 201710L < __STDC_VERSION__
+#define BEZIER_INTERSECTION_2D_STORAGECLASS [[gnu::const]] static inline
+#else
+#define BEZIER_INTERSECTION_2D_STORAGECLASS __attribute__( \
+          (__const__)) static inline
+#endif
+#else
+#define BEZIER_INTERSECTION_2D_STORAGECLASS static inline
+#endif
 #endif
 
 //----------------------------------------------------------------------
@@ -159,6 +164,9 @@ typedef struct
 
 //----------------------------------------------------------------------
 
+#define BEZIER_INTERSECTION_CHOOSE(pred, iftrue, iffalse) \
+        ((pred) ? (iftrue) : (iffalse))
+
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_nan (void)
 {
@@ -172,17 +180,19 @@ intersection_real_nan (void)
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_abs (const intersection_real x)
 {
-  return (x < INTERSECTION_REAL_ZERO) ? (-x) : x;
+  return BEZIER_INTERSECTION_CHOOSE (x < INTERSECTION_REAL_ZERO, -x, x);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_sgn (const intersection_real x)
 {
-  return ((x < INTERSECTION_REAL_ZERO)
-          ? (intersection_real) (-1.0)
-          : ((x == INTERSECTION_REAL_ZERO)
-             ? INTERSECTION_REAL_ZERO
-             : INTERSECTION_REAL_0NE));
+  return (BEZIER_INTERSECTION_CHOOSE
+            (x < INTERSECTION_REAL_ZERO,
+            (intersection_real) (-1.0),
+            BEZIER_INTERSECTION_CHOOSE
+              (x == INTERSECTION_REAL_ZERO,
+              INTERSECTION_REAL_ZERO,
+              INTERSECTION_REAL_0NE)));
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
@@ -201,28 +211,26 @@ BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_min (const intersection_real x,
                        const intersection_real y)
 {
-  return (x < y) ? x : y;
+  return BEZIER_INTERSECTION_CHOOSE (x < y, x, y);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_max (const intersection_real x,
                        const intersection_real y)
 {
-  return (x < y) ? y : x;
+  return BEZIER_INTERSECTION_CHOOSE (x < y, y, x);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_bound_0_1 (const intersection_real x)
 {
-  return ((x < INTERSECTION_REAL_ZERO)
-          ? (INTERSECTION_REAL_ZERO)
-          : ((INTERSECTION_REAL_0NE < x)
-             ? (INTERSECTION_REAL_0NE)
-             : x));
+  return (BEZIER_INTERSECTION_CHOOSE
+            (x < INTERSECTION_REAL_ZERO,
+            INTERSECTION_REAL_ZERO,
+            BEZIER_INTERSECTION_CHOOSE
+              (INTERSECTION_REAL_0NE < x,
+              INTERSECTION_REAL_0NE, x)));
 }
-
-#define INTERSECTION_REAL_CHOOSE(pred, iftrue, iffalse) \
-  ((pred) ? (iftrue) : (iffalse))
 
 //----------------------------------------------------------------------
 
@@ -282,7 +290,9 @@ empty_intersection_record (void)
 {
   const intersection_real nan = intersection_real_nan ();
   return make_intersection_record (false, 0,
-                                   nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan);
+                                   nan, nan, nan, nan, nan, nan, nan,
+                                   nan, nan, nan, nan, nan, nan, nan,
+                                   nan, nan, nan, nan);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS bool
@@ -297,9 +307,11 @@ intersection_record_contains (const intersection_record rec,
   else
     {
       const intersection_real dp =
-        (tp < rec.tp[i]) ? (rec.tp[i] - tp) : (tp - rec.tp[i]);
+        BEZIER_INTERSECTION_CHOOSE (tp < rec.tp[i], rec.tp[i] - tp,
+                                    tp - rec.tp[i]);
       const intersection_real dq =
-        (tq < rec.tq[i]) ? (rec.tq[i] - tq) : (tq - rec.tq[i]);
+        BEZIER_INTERSECTION_CHOOSE (tq < rec.tq[i], rec.tq[i] - tq,
+                                    tq - rec.tq[i]);
       if (dp <= tol && dq <= tol)
         return true;
       else
@@ -323,197 +335,197 @@ intersection_record_add (const intersection_record rec,
     switch (rec.n)
       {
       case 0:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   tp_bounded,
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   tq_bounded,
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  tp_bounded,
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  tq_bounded,
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 1:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   tp_bounded,
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   tq_bounded,
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  tp_bounded,
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  tq_bounded,
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 2:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   tp_bounded,
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   tq_bounded,
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  tp_bounded,
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  tq_bounded,
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 3:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   tp_bounded,
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   tq_bounded,
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  tp_bounded,
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  tq_bounded,
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 4:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   tp_bounded,
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   tq_bounded,
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  tp_bounded,
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  tq_bounded,
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 5:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   tp_bounded,
-                   rec.tp[6],
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   tq_bounded,
-                   rec.tq[6],
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  tp_bounded,
+                  rec.tp[6],
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  tq_bounded,
+                  rec.tq[6],
+                  rec.tq[7],
+                  rec.tq[8]));
       case 6:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   tp_bounded,
-                   rec.tp[7],
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   tq_bounded,
-                   rec.tq[7],
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  tp_bounded,
+                  rec.tp[7],
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  tq_bounded,
+                  rec.tq[7],
+                  rec.tq[8]));
       case 7:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   tp_bounded,
-                   rec.tp[8],
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   tq_bounded,
-                   rec.tq[8]));
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  tp_bounded,
+                  rec.tp[8],
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  tq_bounded,
+                  rec.tq[8]));
       case 8:
-          return (make_intersection_record
+        return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
-                   rec.tp[0],
-                   rec.tp[1],
-                   rec.tp[2],
-                   rec.tp[3],
-                   rec.tp[4],
-                   rec.tp[5],
-                   rec.tp[6],
-                   rec.tp[7],
-                   tp_bounded,
-                   rec.tq[0],
-                   rec.tq[1],
-                   rec.tq[2],
-                   rec.tq[3],
-                   rec.tq[4],
-                   rec.tq[5],
-                   rec.tq[6],
-                   rec.tq[7],
-                   tq_bounded));
-        default:
-          return rec;
-    }
+                  rec.tp[0],
+                  rec.tp[1],
+                  rec.tp[2],
+                  rec.tp[3],
+                  rec.tp[4],
+                  rec.tp[5],
+                  rec.tp[6],
+                  rec.tp[7],
+                  tp_bounded,
+                  rec.tq[0],
+                  rec.tq[1],
+                  rec.tq[2],
+                  rec.tq[3],
+                  rec.tq[4],
+                  rec.tq[5],
+                  rec.tq[6],
+                  rec.tq[7],
+                  tq_bounded));
+      default:
+        return rec;
+      }
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
@@ -538,9 +550,10 @@ intersection_real_eval_quadratic (const intersection_real_quadratic q,
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_quadratic
-intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
-                                       const intersection_real u0,
-                                       const intersection_real u1)
+intersection_real_subdivide_quadratic (
+  const intersection_real_quadratic q,
+  const intersection_real u0,
+  const intersection_real u1)
 {
   const intersection_real du = u1 - u0;
   const intersection_real orig_span = q.t_max - q.t_min;
@@ -557,7 +570,7 @@ intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
   //
   const intersection_real_point mid =
     intersection_real_eval_quadratic
-    (q, INTERSECTION_REAL_HALF * (u0 + u1));
+      (q, INTERSECTION_REAL_HALF * (u0 + u1));
   const intersection_real_point lin_mid = {
     .x = INTERSECTION_REAL_HALF * (p0.x + p2.x),
     .y = INTERSECTION_REAL_HALF * (p0.y + p2.y)
@@ -576,7 +589,8 @@ intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
+BEZIER_INTERSECTION_2D_STORAGECLASS const
+intersection_real_quadratic_roots
 make_intersection_real_quadratic_roots (void)
 {
   const intersection_real nan = intersection_real_nan ();
@@ -590,68 +604,72 @@ make_intersection_real_quadratic_roots (void)
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
-intersection_real_quadratic_insert_root (const intersection_real_quadratic_roots qroots,
-                                         const intersection_real new_root)
+BEZIER_INTERSECTION_2D_STORAGECLASS const
+intersection_real_quadratic_roots
+intersection_real_quadratic_insert_root (
+  const intersection_real_quadratic_roots qroots,
+  const intersection_real
+  new_root)
 {
   switch (qroots.nroots)
     {
     case 0:
-      {
-        const intersection_real_quadratic_roots result = {
-          .nroots = 1,
-          .root0 = new_root,
-          .root1 = qroots.root1,
-          .root2 = qroots.root2,
-          .root3 = qroots.root3
-        };
-        return result;
-      }
+    {
+      const intersection_real_quadratic_roots result = {
+        .nroots = 1,
+        .root0 = new_root,
+        .root1 = qroots.root1,
+        .root2 = qroots.root2,
+        .root3 = qroots.root3
+      };
+      return result;
+    }
     case 1:
-      {
-        const intersection_real_quadratic_roots result = {
-          .nroots = 2,
-          .root0 = qroots.root0,
-          .root1 = new_root,
-          .root2 = qroots.root2,
-          .root3 = qroots.root3
-        };
-        return result;
-      }
+    {
+      const intersection_real_quadratic_roots result = {
+        .nroots = 2,
+        .root0 = qroots.root0,
+        .root1 = new_root,
+        .root2 = qroots.root2,
+        .root3 = qroots.root3
+      };
+      return result;
+    }
     case 2:
-      {
-        const intersection_real_quadratic_roots result = {
-          .nroots = 3,
-          .root0 = qroots.root0,
-          .root1 = qroots.root1,
-          .root2 = new_root,
-          .root3 = qroots.root3
-        };
-        return result;
-      }
+    {
+      const intersection_real_quadratic_roots result = {
+        .nroots = 3,
+        .root0 = qroots.root0,
+        .root1 = qroots.root1,
+        .root2 = new_root,
+        .root3 = qroots.root3
+      };
+      return result;
+    }
     case 3:
-      {
-        const intersection_real_quadratic_roots result = {
-          .nroots = 4,
-          .root0 = qroots.root0,
-          .root1 = qroots.root1,
-          .root2 = qroots.root2,
-          .root3 = new_root
-        };
-        return result;
-      }
+    {
+      const intersection_real_quadratic_roots result = {
+        .nroots = 4,
+        .root0 = qroots.root0,
+        .root1 = qroots.root1,
+        .root2 = qroots.root2,
+        .root3 = new_root
+      };
+      return result;
+    }
     default:
       // Programmer error.
       abort ();
     }
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
+BEZIER_INTERSECTION_2D_STORAGECLASS const
+intersection_real_quadratic_roots
 intersection_real_quadratic_roots_solve
-(const intersection_real_quadratic_roots qroots,
- const intersection_real a,
- const intersection_real b,
- const intersection_real c)
+  (const intersection_real_quadratic_roots qroots,
+  const intersection_real a,
+  const intersection_real b,
+  const intersection_real c)
 {
   //
   // Solve av² + bv + c = 0.
@@ -663,7 +681,7 @@ intersection_real_quadratic_roots_solve
       if (((intersection_real) INTERSECTION_DEFAULT_VERYSMALL) <
           intersection_real_abs (b))
         return (intersection_real_quadratic_insert_root
-                (qroots, -c / b));
+                  (qroots, -c / b));
       else
         return qroots;
     }
@@ -676,9 +694,9 @@ intersection_real_quadratic_roots_solve
           const intersection_real s_discrim =
             intersection_real_sqrt (discrim);
           return (intersection_real_quadratic_insert_root
-                  ((intersection_real_quadratic_insert_root
-                    (qroots, (-b - s_discrim) / (a + a))),
-                   ((-b + s_discrim) / (a + a))));
+                    ((intersection_real_quadratic_insert_root
+                        (qroots, (-b - s_discrim) / (a + a))),
+                    ((-b + s_discrim) / (a + a))));
         }
       else
         return qroots;
@@ -695,281 +713,297 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
 {
   switch (accum0.n)
     {
-case 0:
-                      case 1:
-                      case 2:
-                      case 3:
-                      case 4:
-                      case 5:
-                      case 6:
-                      case 7:
-                      case 8:
-                      
- const intersection_real p_span = p.t_max - p.t_min;
- const intersection_real q_span = q.t_max - q.t_min;
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
 
- if ((p_span <= rel_tol) * (q_span <= rel_tol))
-   // Both parameter spans are within relative tolerance. Record a
-   // root.
-   return (intersection_record_add
-           (accum0, INTERSECTION_REAL_HALF * (p.t_min + p.t_max),
-            INTERSECTION_REAL_HALF * (q.t_min + q.t_max),
-            rel_tol + rel_tol));
- else if (INTERSECTION_MAXIMUM_DEPTH < depth)
-   // Limit recursion depth to prevent infinite loops.
-   return (intersection_record_add
-           (accum0, INTERSECTION_REAL_HALF * (p.t_min + p.t_max),
-            INTERSECTION_REAL_HALF * (q.t_min + q.t_max),
-            rel_tol + rel_tol));
- else
-   {
-     // Skeleton baseline vector of curve P.
-     const intersection_real skel_dx = p.p2.x - p.p0.x;
-     const intersection_real skel_dy = p.p2.y - p.p0.y;
-     const intersection_real skel_len_sq =
-       (skel_dx * skel_dx) + (skel_dy * skel_dy);
+      const intersection_real p_span = p.t_max - p.t_min;
+      const intersection_real q_span = q.t_max - q.t_min;
 
-     // If curve P's skeleton has collapsed to a point, swap roles or
-     // split.
-     if (skel_len_sq <= abs_tol * abs_tol)
-       {
-         const intersection_real q_skel_dx = q.p2.x - q.p0.x;
-         const intersection_real q_skel_dy = q.p2.y - q.p0.y;
-         const intersection_real q_skel_len_sq =
-           (q_skel_dx * q_skel_dx) + (q_skel_dy * q_skel_dy);
+      if ((p_span <= rel_tol) * (q_span <= rel_tol))
+        // Both parameter spans are within relative tolerance. Record a
+        // root.
+        return (intersection_record_add
+                  (accum0, INTERSECTION_REAL_HALF * (p.t_min + p.t_max),
+                  INTERSECTION_REAL_HALF * (q.t_min + q.t_max),
+                  rel_tol + rel_tol));
+      else if (INTERSECTION_MAXIMUM_DEPTH < depth)
+        // Limit recursion depth to prevent infinite loops.
+        return (intersection_record_add
+                  (accum0, INTERSECTION_REAL_HALF * (p.t_min + p.t_max),
+                  INTERSECTION_REAL_HALF * (q.t_min + q.t_max),
+                  rel_tol + rel_tol));
+      else
+        {
+          // Skeleton baseline vector of curve P.
+          const intersection_real skel_dx = p.p2.x - p.p0.x;
+          const intersection_real skel_dy = p.p2.y - p.p0.y;
+          const intersection_real skel_len_sq =
+            (skel_dx * skel_dx) + (skel_dy * skel_dy);
 
-         if (q_skel_len_sq <= abs_tol * abs_tol)
-           {
-             // Both curves have collapsed to points.
-             if (intersection_real_distance_sq (p.p0, q.p0)
-                 <= abs_tol * abs_tol)
-               return (intersection_record_add
-                       (accum0, p.t_min, q.t_min, rel_tol + rel_tol));
-             else
-               return accum0;
-           }
-         else
-           // Swap P and Q.
-           return intersection_of_two_quadratics (q, p, rel_tol, abs_tol,
-                                                  depth + 1, accum0);
-       }
-     else
-       {
-         const intersection_real skel_len =
-           intersection_real_sqrt (skel_len_sq);
+          // If curve P's skeleton has collapsed to a point, swap roles or
+          // split.
+          if (skel_len_sq <= abs_tol * abs_tol)
+            {
+              const intersection_real q_skel_dx = q.p2.x - q.p0.x;
+              const intersection_real q_skel_dy = q.p2.y - q.p0.y;
+              const intersection_real q_skel_len_sq =
+                (q_skel_dx * q_skel_dx) + (q_skel_dy * q_skel_dy);
 
-         // Transverse deviation of P from its skeleton line.
-         const intersection_real d_y =
-           ((-skel_dy * p.p1_delta.x) + (skel_dx * p.p1_delta.y))
-           / skel_len;
+              if (q_skel_len_sq <= abs_tol * abs_tol)
+                {
+                  // Both curves have collapsed to points.
+                  if (intersection_real_distance_sq (p.p0, q.p0)
+                      <= abs_tol * abs_tol)
+                    return (intersection_record_add
+                              (accum0, p.t_min, q.t_min,
+                              rel_tol + rel_tol));
+                  else
+                    return accum0;
+                }
+              else
+                // Swap P and Q.
+                return intersection_of_two_quadratics (q, p, rel_tol,
+                                                       abs_tol,
+                                                       depth + 1,
+                                                       accum0);
+            }
+          else
+            {
+              const intersection_real skel_len =
+                intersection_real_sqrt (skel_len_sq);
 
-         //
-         // Extreme bounds of P along perpendicular axis. The
-         // polynomial is
-         //
-         //   (1-t)*0 + t*0 + (1-t)*t*d_y = (1-t)*t*d_y
-         //
-         const intersection_real d_min =
-           (INTERSECTION_REAL_ZERO <= d_y)
-           ? -(intersection_real) INTERSECTION_DEFAULT_PADDING
-           : ((intersection_real) 0.25 * d_y
-              - (intersection_real) INTERSECTION_DEFAULT_PADDING);
-         const intersection_real d_max =
-           (INTERSECTION_REAL_ZERO <= d_y)
-           ? ((intersection_real) 0.25 * d_y
-              + (intersection_real) INTERSECTION_DEFAULT_PADDING)
-           : (intersection_real) INTERSECTION_DEFAULT_PADDING;
+              // Transverse deviation of P from its skeleton line.
+              const intersection_real d_y =
+                ((-skel_dy * p.p1_delta.x) + (skel_dx * p.p1_delta.y))
+                / skel_len;
 
-         // Project Q onto perpendicular distance to P's skeleton
-         // line.
-         const intersection_real q0_perp =
-           (-skel_dy * (q.p0.x - p.p0.x) + skel_dx * (q.p0.y - p.p0.y))
-           / skel_len;
-         const intersection_real q2_perp =
-           (-skel_dy * (q.p2.x - p.p0.x) + skel_dx * (q.p2.y - p.p0.y))
-           / skel_len;
-         const intersection_real qd_perp =
-           (-skel_dy * q.p1_delta.x + skel_dx * q.p1_delta.y)
-           / skel_len;
+              //
+              // Extreme bounds of P along the perpendicular axis.
+              //
+              // The polynomial is (1-t)*0 + t*0 + (1-t)*t*d_y =
+              // (1-t)*t*d_y.
+              //
+              const intersection_real d_min =
+                (BEZIER_INTERSECTION_CHOOSE
+                   (INTERSECTION_REAL_ZERO <= d_y,
+                   -(intersection_real) INTERSECTION_DEFAULT_PADDING,
+                   (intersection_real) 0.25 * d_y
+                   - (intersection_real) INTERSECTION_DEFAULT_PADDING));
+              const intersection_real d_max =
+                (BEZIER_INTERSECTION_CHOOSE
+                   (INTERSECTION_REAL_ZERO <= d_y,
+                   (intersection_real) 0.25 * d_y
+                   + (intersection_real) INTERSECTION_DEFAULT_PADDING,
+                   (intersection_real) INTERSECTION_DEFAULT_PADDING));
 
-         //
-         // Q's perpendicular coordinate polynomial:
-         //
-         //   y(v) = (1 - v)*q0_perp + v*q2_perp + (1 - v)*v*qd_perp
-         //        = a*v^2 + b*v + c
-         //
-         const intersection_real a = -qd_perp;
-         const intersection_real b = q2_perp - q0_perp + qd_perp;
-         const intersection_real c = q0_perp;
+              // Project Q onto perpendicular distance to P's skeleton
+              // line.
+              const intersection_real q0_perp =
+                (-skel_dy * (q.p0.x - p.p0.x)
+                 + skel_dx * (q.p0.y - p.p0.y)) / skel_len;
+              const intersection_real q2_perp =
+                (-skel_dy * (q.p2.x - p.p0.x)
+                 + skel_dx * (q.p2.y - p.p0.y)) / skel_len;
+              const intersection_real qd_perp =
+                (-skel_dy * q.p1_delta.x
+                 + skel_dx * q.p1_delta.y) / skel_len;
 
-         // Compute range of y(v) for 0 <= v <= 1
-         const bool a_is_very_small =
-           (intersection_real_abs (a)
-            <= (intersection_real) INTERSECTION_DEFAULT_VERYSMALL);
-         const intersection_real v_vertex =
-           ((a_is_very_small)
-            ? (intersection_real_sgn (b) * intersection_real_sgn (a)
-               * HUGE_VAL)
-            : (-b / (a + a)));
-         const bool v_vertex_in_interval =
-           ((INTERSECTION_REAL_ZERO < v_vertex) *
-            (v_vertex < INTERSECTION_REAL_0NE));
-         const intersection_real v_min_0 =
-           intersection_real_min (q0_perp, q2_perp);
-         const intersection_real v_max_0 =
-           intersection_real_max (q0_perp, q2_perp);
-         const intersection_real y_vertex =
-           (v_vertex_in_interval)
-           ? ((((a * v_vertex) + b) * v_vertex) + c)
-           : intersection_real_nan ();       
-         const intersection_real v_min =
-           ((!v_vertex_in_interval)
-            ? v_min_0
-            : ((y_vertex < v_min_0)
-               ? y_vertex
-               : v_min_0));
-         const intersection_real v_max =
-           ((!v_vertex_in_interval)
-            ? v_max_0
-            : ((v_max_0 < y_vertex)
-               ? y_vertex
-               : v_max_0));
+              //
+              // Q's perpendicular coordinate polynomial:
+              //
+              //   y(v) = (1 - v)*q0_perp + v*q2_perp + (1 - v)*v*qd_perp
+              //        = a*v^2 + b*v + c
+              //
+              const intersection_real a = -qd_perp;
+              const intersection_real b = q2_perp - q0_perp + qd_perp;
+              const intersection_real c = q0_perp;
 
-         if (!((v_min <= d_max) * (d_min <= v_max)))
-           // Q's perpendicular band does not overlap P's fat line.
-           return accum0;
-         else
-           {
-             // Find clipped parameter interval [u_min, u_max] on Q.
-             intersection_real u_min = INTERSECTION_REAL_ZERO;
-             intersection_real u_max = INTERSECTION_REAL_0NE;
+              // Compute range of y(v) for 0 <= v <= 1
+              const bool a_is_very_small =
+                (intersection_real_abs (a)
+                 <= (intersection_real) INTERSECTION_DEFAULT_VERYSMALL);
+              const intersection_real v_vertex =
+                (BEZIER_INTERSECTION_CHOOSE
+                   (a_is_very_small,
+                   intersection_real_sgn (b) * intersection_real_sgn (a)
+                   * INTERSECTION_REAL_HUGE_VAL,
+                   -b / (a + a)));
+              const bool v_vertex_in_interval =
+                ((INTERSECTION_REAL_ZERO < v_vertex) *
+                 (v_vertex < INTERSECTION_REAL_0NE));
+              const intersection_real v_min_0 =
+                intersection_real_min (q0_perp, q2_perp);
+              const intersection_real v_max_0 =
+                intersection_real_max (q0_perp, q2_perp);
+              const intersection_real y_vertex =
+                (BEZIER_INTERSECTION_CHOOSE
+                   (v_vertex_in_interval,
+                   ((((a * v_vertex) + b) * v_vertex) + c),
+                   intersection_real_nan ()));
+              const intersection_real v_min =
+                (BEZIER_INTERSECTION_CHOOSE
+                   ((!v_vertex_in_interval), v_min_0,
+                   (BEZIER_INTERSECTION_CHOOSE ((y_vertex < v_min_0),
+                                                y_vertex, v_min_0))));
+              const intersection_real v_max =
+                (BEZIER_INTERSECTION_CHOOSE
+                   ((!v_vertex_in_interval), v_max_0,
+                   (BEZIER_INTERSECTION_CHOOSE ((v_max_0 < y_vertex),
+                                                y_vertex, v_max_0))));
 
-             // Intersect quadratic polynomial with d_min and d_max.
-             {
-               const intersection_real_quadratic_roots qroots =
-                 intersection_real_quadratic_roots_solve
-                 (intersection_real_quadratic_roots_solve
-                  (make_intersection_real_quadratic_roots (),
-                   a, b, c - d_min),
-                  a, b, c - d_max);
+              if (!((v_min <= d_max) * (d_min <= v_max)))
+                // Q's perpendicular band does not overlap P's fat line.
+                return accum0;
+              else
+                {
+                  // Find clipped parameter interval [u_min, u_max] on Q.
+                  intersection_real u_min = INTERSECTION_REAL_ZERO;
+                  intersection_real u_max = INTERSECTION_REAL_0NE;
 
-               intersection_real roots[4] = {
-                 [0] = qroots.root0,
-                 [1] = qroots.root1,
-                 [2] = qroots.root2,
-                 [3] = qroots.root3
-               };
-               int nroots = qroots.nroots;
-               int k;
+                  // Intersect quadratic polynomial with d_min and d_max.
+                  {
+                    const intersection_real_quadratic_roots qroots =
+                      intersection_real_quadratic_roots_solve
+                        (intersection_real_quadratic_roots_solve
+                          (make_intersection_real_quadratic_roots (),
+                          a, b, c - d_min),
+                        a, b, c - d_max);
 
-               // Candidate parameter bounds from valid roots in
-               // [0,1].
-               {
-                 intersection_real inside_min;
-                 intersection_real inside_max;
-                 bool has_inside;
+                    intersection_real roots[4] = {
+                      [0] = qroots.root0,
+                      [1] = qroots.root1,
+                      [2] = qroots.root2,
+                      [3] = qroots.root3
+                    };
+                    int nroots = qroots.nroots;
+                    int k;
 
-                 inside_min = INTERSECTION_REAL_0NE;
-                 inside_max = INTERSECTION_REAL_ZERO;
-                 has_inside = false;
+                    // Candidate parameter bounds from valid roots in
+                    // [0,1].
+                    {
+                      intersection_real inside_min;
+                      intersection_real inside_max;
+                      bool has_inside;
 
-                 if (q0_perp >= d_min && q0_perp <= d_max)
-                   {
-                     inside_min = INTERSECTION_REAL_ZERO;
-                     inside_max = INTERSECTION_REAL_ZERO;
-                     has_inside = true;
-                   }
-                 if (q2_perp >= d_min && q2_perp <= d_max)
-                   {
-                     if (!has_inside || INTERSECTION_REAL_0NE < inside_min)
-                       inside_min = INTERSECTION_REAL_0NE;
-                     if (!has_inside || INTERSECTION_REAL_0NE > inside_max)
-                       inside_max = INTERSECTION_REAL_0NE;
-                     has_inside = true;
-                   }
+                      inside_min = INTERSECTION_REAL_0NE;
+                      inside_max = INTERSECTION_REAL_ZERO;
+                      has_inside = false;
 
-                 for (k = 0; k != nroots; k += 1)
-                   {
-                     intersection_real r;
-                     r = roots[k];
-                     if (r >= INTERSECTION_REAL_ZERO &&
-                         r <= INTERSECTION_REAL_0NE)
-                       {
-                         if (!has_inside || r < inside_min)
-                           inside_min = r;
-                         if (!has_inside || r > inside_max)
-                           inside_max = r;
-                         has_inside = true;
-                       }
-                   }
+                      if (q0_perp >= d_min && q0_perp <= d_max)
+                        {
+                          inside_min = INTERSECTION_REAL_ZERO;
+                          inside_max = INTERSECTION_REAL_ZERO;
+                          has_inside = true;
+                        }
+                      if (q2_perp >= d_min && q2_perp <= d_max)
+                        {
+                          if (!has_inside ||
+                              INTERSECTION_REAL_0NE < inside_min)
+                            inside_min = INTERSECTION_REAL_0NE;
+                          if (!has_inside ||
+                              INTERSECTION_REAL_0NE > inside_max)
+                            inside_max = INTERSECTION_REAL_0NE;
+                          has_inside = true;
+                        }
 
-                 if (has_inside)
-                   {
-                     u_min = inside_min;
-                     u_max = inside_max;
-                   }
-               }
+                      for (k = 0; k != nroots; k += 1)
+                        {
+                          intersection_real r;
+                          r = roots[k];
+                          if (r >= INTERSECTION_REAL_ZERO &&
+                              r <= INTERSECTION_REAL_0NE)
+                            {
+                              if (!has_inside || r < inside_min)
+                                inside_min = r;
+                              if (!has_inside || r > inside_max)
+                                inside_max = r;
+                              has_inside = true;
+                            }
+                        }
 
-               // If clipping achieved poor progress (reduction < 20%),
-               // subdivide the larger curve.
-               if ((u_max - u_min) > (intersection_real) 0.8)
-                 {
-                   if (p_span >= q_span)
-                     {
-                       const intersection_real_quadratic p_left =
-                         intersection_real_subdivide_quadratic
-                         (p, INTERSECTION_REAL_ZERO,
-                          INTERSECTION_REAL_HALF);
-                       const intersection_real_quadratic p_right =
-                         intersection_real_subdivide_quadratic
-                         (p, INTERSECTION_REAL_HALF,
-                          INTERSECTION_REAL_0NE);
-                       return (intersection_of_two_quadratics
-                               (p_right, q, rel_tol, abs_tol, depth + 1,
-                                (intersection_of_two_quadratics
-                                 (p_left, q, rel_tol, abs_tol, depth + 1,
-                                  accum0))));
-                     }
-                   else
-                     {
-                       intersection_real_quadratic q_left =
-                         intersection_real_subdivide_quadratic
-                         (q, INTERSECTION_REAL_ZERO,
-                          INTERSECTION_REAL_HALF);
-                       intersection_real_quadratic q_right =
-                         intersection_real_subdivide_quadratic
-                         (q, INTERSECTION_REAL_HALF,
-                          INTERSECTION_REAL_0NE);
-                       return (intersection_of_two_quadratics
-                               (p, q_right, rel_tol, abs_tol, depth + 1,
-                                (intersection_of_two_quadratics
-                                 (p, q_left, rel_tol, abs_tol, depth + 1,
-                                  accum0))));
-                     }
-                 }
+                      if (has_inside)
+                        {
+                          u_min = inside_min;
+                          u_max = inside_max;
+                        }
+                    }
 
-               // Apply clipped parameter sub-interval to Q
-               // and swap roles for rapid convergence.
-               {
-                 intersection_real_quadratic q_clipped;
-                 // Add slight margin.
-                 intersection_real m0;
-                 intersection_real m1;
-                 m0 = u_min - (intersection_real) 0.01;
-                 m1 = u_max + (intersection_real) 0.01;
-                 if (m0 < INTERSECTION_REAL_ZERO)
-                   m0 = INTERSECTION_REAL_ZERO;
-                 if (m1 > INTERSECTION_REAL_0NE)
-                   m1 = INTERSECTION_REAL_0NE;
-                 q_clipped = intersection_real_subdivide_quadratic (q, m0, m1);
-                 // Swap roles (tail call).
-                 return intersection_of_two_quadratics (q_clipped, p, rel_tol, abs_tol,
-                                                        depth + 1, accum0);
-               }
-             }
-           }
-       }
-   }
+                    // If clipping achieved poor progress (reduction < 20%),
+                    // subdivide the larger curve.
+                    if ((u_max - u_min) > (intersection_real) 0.8)
+                      {
+                        if (p_span >= q_span)
+                          {
+                            const intersection_real_quadratic p_left =
+                              intersection_real_subdivide_quadratic
+                                (p, INTERSECTION_REAL_ZERO,
+                                INTERSECTION_REAL_HALF);
+                            const intersection_real_quadratic p_right =
+                              intersection_real_subdivide_quadratic
+                                (p, INTERSECTION_REAL_HALF,
+                                INTERSECTION_REAL_0NE);
+                            return (intersection_of_two_quadratics
+                                      (p_right, q, rel_tol, abs_tol,
+                                      depth + 1,
+                                      (intersection_of_two_quadratics
+                                         (p_left, q, rel_tol, abs_tol,
+                                         depth + 1,
+                                         accum0))));
+                          }
+                        else
+                          {
+                            intersection_real_quadratic q_left =
+                              intersection_real_subdivide_quadratic
+                                (q, INTERSECTION_REAL_ZERO,
+                                INTERSECTION_REAL_HALF);
+                            intersection_real_quadratic q_right =
+                              intersection_real_subdivide_quadratic
+                                (q, INTERSECTION_REAL_HALF,
+                                INTERSECTION_REAL_0NE);
+                            return (intersection_of_two_quadratics
+                                      (p, q_right, rel_tol, abs_tol,
+                                      depth + 1,
+                                      (intersection_of_two_quadratics
+                                         (p, q_left, rel_tol, abs_tol,
+                                         depth + 1,
+                                         accum0))));
+                          }
+                      }
+
+                    // Apply clipped parameter sub-interval to Q
+                    // and swap roles for rapid convergence.
+                    {
+                      intersection_real_quadratic q_clipped;
+                      // Add slight margin.
+                      intersection_real m0;
+                      intersection_real m1;
+                      m0 = u_min - (intersection_real) 0.01;
+                      m1 = u_max + (intersection_real) 0.01;
+                      if (m0 < INTERSECTION_REAL_ZERO)
+                        m0 = INTERSECTION_REAL_ZERO;
+                      if (m1 > INTERSECTION_REAL_0NE)
+                        m1 = INTERSECTION_REAL_0NE;
+                      q_clipped =
+                        intersection_real_subdivide_quadratic (q, m0,
+                                                               m1);
+                      // Swap roles (tail call).
+                      return intersection_of_two_quadratics (q_clipped,
+                                                             p, rel_tol,
+                                                             abs_tol,
+                                                             depth + 1,
+                                                             accum0);
+                    }
+                  }
+                }
+            }
+        }
 
     case 9:
       return accum0;
@@ -986,9 +1020,11 @@ case 0:
 /* Number of sub-intervals required for cubic degree reduction:
  * E_K = ||Q1_delta - Q2_delta|| / (12 * sqrt(3) * K^2) <= tol */
 BEZIER_INTERSECTION_2D_STORAGECLASS size_t
-intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
-                                      const intersection_real_point q2_delta,
-                                      const intersection_real tol)
+intersection_real_cubic_subdivisions (
+  const intersection_real_point q1_delta,
+  const intersection_real_point
+  q2_delta,
+  const intersection_real tol)
 {
   size_t k;
 
@@ -1010,10 +1046,11 @@ intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
         {
           const intersection_real k_real =
             intersection_real_sqrt (k_sq);
-          const size_t k = (((size_t) k_real == k_real)
-                            ? (size_t) k_real
-                            : (size_t) k_real + 1);
-          return (k <= 16) ? k : (size_t) 16;
+          const size_t k =
+            BEZIER_INTERSECTION_CHOOSE ((size_t) k_real == k_real,
+                                        (size_t) k_real,
+                                        (size_t) k_real + 1);
+          return BEZIER_INTERSECTION_CHOOSE (k <= 16, k, (size_t) 16);
         }
     }
 }
@@ -1084,36 +1121,43 @@ bezier_intersection_abs_tol (const intersection_real px0,
   const intersection_real coord_scale1 =
     intersection_real_abs (px0);
   const intersection_real coord_scale2 =
-   (intersection_real_abs (py0) > coord_scale1)
-    ? intersection_real_abs (py0)
-    : coord_scale1;
-    const intersection_real coord_scale3 =
-      (intersection_real_abs (px2) > coord_scale2)
-      ? intersection_real_abs (px2)
-      : coord_scale2;
-    const intersection_real coord_scale4 =
-      (intersection_real_abs (py2) > coord_scale3)
-      ? intersection_real_abs (py2)
-      : coord_scale3;
-    const intersection_real coord_scale5 =
-      (intersection_real_abs (qx0) > coord_scale4)
-      ? intersection_real_abs (qx0)
-      : coord_scale4;
-    const intersection_real coord_scale6 =
-      (intersection_real_abs (qy0) > coord_scale5)
-      ? intersection_real_abs (qy0)
-      : coord_scale5;
-    const intersection_real coord_scale7 =
-      (intersection_real_abs (qx2) > coord_scale6)
-      ? intersection_real_abs (qx2)
-      : coord_scale6;
-    const intersection_real coord_scale8 =
-      (intersection_real_abs (qy2) > coord_scale7)
-      ? intersection_real_abs (qy2)
-      : coord_scale7;
-    return ((coord_scale8 < INTERSECTION_REAL_0NE)
-            ? rel_tol
-            : (rel_tol * coord_scale8));
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (py0) > coord_scale1,
+      intersection_real_abs (py0),
+      coord_scale1);
+  const intersection_real coord_scale3 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (px2) > coord_scale2,
+      intersection_real_abs (px2),
+      coord_scale2);
+  const intersection_real coord_scale4 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (py2) > coord_scale3,
+      intersection_real_abs (py2),
+      coord_scale3);
+  const intersection_real coord_scale5 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (qx0) > coord_scale4,
+      intersection_real_abs (qx0),
+      coord_scale4);
+  const intersection_real coord_scale6 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (qy0) > coord_scale5,
+      intersection_real_abs (qy0),
+      coord_scale5);
+  const intersection_real coord_scale7 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (qx2) > coord_scale6,
+      intersection_real_abs (qx2),
+      coord_scale6);
+  const intersection_real coord_scale8 =
+    BEZIER_INTERSECTION_CHOOSE
+      (intersection_real_abs (qy2) > coord_scale7,
+      intersection_real_abs (qy2),
+      coord_scale7);
+  return (BEZIER_INTERSECTION_CHOOSE
+            (coord_scale8 < INTERSECTION_REAL_0NE,
+            rel_tol, rel_tol * coord_scale8));
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_cubic
@@ -1140,12 +1184,12 @@ bezier_intersection_cubic_spower (const bool quadratic,
       const intersection_real_point pt0 = { .x = x0, .y = y0 };
       const intersection_real_point pt3 = { .x = x2, .y = y2 };
       const intersection_real_point q1_delta = {
-        .x = INTERSECTION_REAL_CHOOSE (spower, x1,
-                                       (INTERSECTION_REAL_TWO * x1)
-                                       - x0 - x2),
-        .y = INTERSECTION_REAL_CHOOSE (spower, y1,
-                                       (INTERSECTION_REAL_TWO * y1)
-                                       - y0 - y2)
+        .x = BEZIER_INTERSECTION_CHOOSE (spower, x1,
+                                         (INTERSECTION_REAL_TWO * x1)
+                                         - x0 - x2),
+        .y = BEZIER_INTERSECTION_CHOOSE (spower, y1,
+                                         (INTERSECTION_REAL_TWO * y1)
+                                         - y0 - y2)
       };
       const intersection_real_cubic result = {
         .pt0 = pt0,
@@ -1161,24 +1205,24 @@ bezier_intersection_cubic_spower (const bool quadratic,
       const intersection_real_point pt0 = { .x = x0, .y = y0 };
       const intersection_real_point pt3 = { .x = x3, .y = y3 };
       const intersection_real_point q1_delta = {
-        .x = (INTERSECTION_REAL_CHOOSE
-              (spower, x1, ((INTERSECTION_REAL_THREE * x1)
-                            - (INTERSECTION_REAL_TWO * x0)
-                            - x3))),
-        .y = (INTERSECTION_REAL_CHOOSE
-              (spower, y1, ((INTERSECTION_REAL_THREE * y1)
-                            - (INTERSECTION_REAL_TWO * y0)
-                            - y3)))
+        .x = (BEZIER_INTERSECTION_CHOOSE
+                (spower, x1, ((INTERSECTION_REAL_THREE * x1)
+                              - (INTERSECTION_REAL_TWO * x0)
+                              - x3))),
+        .y = (BEZIER_INTERSECTION_CHOOSE
+                (spower, y1, ((INTERSECTION_REAL_THREE * y1)
+                              - (INTERSECTION_REAL_TWO * y0)
+                              - y3)))
       };
       const intersection_real_point q2_delta = {
-        .x = (INTERSECTION_REAL_CHOOSE
-              (spower, x2, ((INTERSECTION_REAL_THREE * x2)
-                            - x0
-                            - (INTERSECTION_REAL_TWO * x3)))),
-        .y = (INTERSECTION_REAL_CHOOSE
-              (spower, y2, ((INTERSECTION_REAL_THREE * y2)
-                            - y0
-                            - (INTERSECTION_REAL_TWO * y3))))
+        .x = (BEZIER_INTERSECTION_CHOOSE
+                (spower, x2, ((INTERSECTION_REAL_THREE * x2)
+                              - x0
+                              - (INTERSECTION_REAL_TWO * x3)))),
+        .y = (BEZIER_INTERSECTION_CHOOSE
+                (spower, y2, ((INTERSECTION_REAL_THREE * y2)
+                              - y0
+                              - (INTERSECTION_REAL_TWO * y3))))
       };
       const size_t k =
         intersection_real_cubic_subdivisions (q1_delta, q2_delta,
@@ -1280,24 +1324,27 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
               intersection_real_quadratic q_sub;
 
               tq0 = (intersection_real) iq / (intersection_real) kq;
-              tq1 = (intersection_real) (iq + 1) / (intersection_real) kq;
+              tq1 = (intersection_real) (iq + 1) /
+                    (intersection_real) kq;
               q_sub = sp_cubic_to_quad_sub (q_pt0, q_pt3, q_q1_delta,
                                             q_q2_delta, tq0, tq1);
 
-              accum = intersection_of_two_quadratics (p_sub, q_sub, rel_tol,
-                                                      abs_tol, 0, accum);
+              accum = intersection_of_two_quadratics (p_sub, q_sub,
+                                                      rel_tol,
+                                                      abs_tol, 0,
+                                                      accum);
             }
         }
 
-      return accum;      
+      return accum;
     }
 }
 
 #endif /* BEZIER_INTERSECTION_2D_H__INCLUDED__ */
 
 /*
-  local variables:
-  mode: c
-  coding: utf-8
-  end:
-*/
+   local variables:
+   mode: c
+   coding: utf-8
+   end:
+ */

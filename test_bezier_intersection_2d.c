@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include "bezier_intersection_2d.h"
+#include "test_bezier_intersection_2d.h"
 
 static void
 print_record (const char *label, intersection_record rec)

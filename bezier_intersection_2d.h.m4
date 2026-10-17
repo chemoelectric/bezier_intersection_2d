@@ -101,6 +101,10 @@ typedef INTERSECTION_REAL intersection_real;
 #define INTERSECTION_DEFAULT_VERYSMALL 1e-14
 #endif
 
+#ifndef INTERSECTION_REAL_HUGE_VAL
+#define INTERSECTION_REAL_HUGE_VAL HUGE_VAL
+#endif
+
 #ifndef INTERSECTION_DEFAULT_PADDING
 #define INTERSECTION_DEFAULT_PADDING 1e-12
 #endif
@@ -180,6 +184,9 @@ typedef struct
 
 //----------------------------------------------------------------------
 
+#define BEZIER_INTERSECTION_CHOOSE(pred, iftrue, iffalse) \
+  ((pred) ? (iftrue) : (iffalse))
+
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_nan (void)
 {
@@ -193,17 +200,19 @@ intersection_real_nan (void)
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_abs (const intersection_real x)
 {
-  return (x < INTERSECTION_REAL_ZERO) ? (-x) : x;
+  return BEZIER_INTERSECTION_CHOOSE (x < INTERSECTION_REAL_ZERO, -x, x);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_sgn (const intersection_real x)
 {
-  return ((x < INTERSECTION_REAL_ZERO)
-          ? (intersection_real) (-1.0)
-          : ((x == INTERSECTION_REAL_ZERO)
-             ? INTERSECTION_REAL_ZERO
-             : INTERSECTION_REAL_0NE));
+  return (BEZIER_INTERSECTION_CHOOSE
+          (x < INTERSECTION_REAL_ZERO,
+           (intersection_real) (-1.0),
+           BEZIER_INTERSECTION_CHOOSE
+           (x == INTERSECTION_REAL_ZERO,
+            INTERSECTION_REAL_ZERO,
+            INTERSECTION_REAL_0NE)));
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
@@ -222,28 +231,26 @@ BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_min (const intersection_real x,
                        const intersection_real y)
 {
-  return (x < y) ? x : y;
+  return BEZIER_INTERSECTION_CHOOSE (x < y, x, y);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_max (const intersection_real x,
                        const intersection_real y)
 {
-  return (x < y) ? y : x;
+  return BEZIER_INTERSECTION_CHOOSE (x < y, y, x);
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
 intersection_real_bound_0_1 (const intersection_real x)
 {
-  return ((x < INTERSECTION_REAL_ZERO)
-          ? (INTERSECTION_REAL_ZERO)
-          : ((INTERSECTION_REAL_0NE < x)
-             ? (INTERSECTION_REAL_0NE)
-             : x));
+  return (BEZIER_INTERSECTION_CHOOSE
+          (x < INTERSECTION_REAL_ZERO,
+           INTERSECTION_REAL_ZERO,
+           BEZIER_INTERSECTION_CHOOSE
+           (INTERSECTION_REAL_0NE < x,
+            INTERSECTION_REAL_0NE, x)));
 }
-
-#define INTERSECTION_REAL_CHOOSE(pred, iftrue, iffalse) \
-  ((pred) ? (iftrue) : (iffalse))
 
 //----------------------------------------------------------------------
 
@@ -294,9 +301,11 @@ intersection_record_contains (const intersection_record rec,
   else
     {
       const intersection_real dp =
-        (tp < rec.tp[i]) ? (rec.tp[i] - tp) : (tp - rec.tp[i]);
+        BEZIER_INTERSECTION_CHOOSE (tp < rec.tp[i], rec.tp[i] - tp,
+                                  tp - rec.tp[i]);
       const intersection_real dq =
-        (tq < rec.tq[i]) ? (rec.tq[i] - tq) : (tq - rec.tq[i]);
+        BEZIER_INTERSECTION_CHOOSE (tq < rec.tq[i], rec.tq[i] - tq,
+                                  tq - rec.tq[i]);
       if (dp <= tol && dq <= tol)
         return true;
       else
@@ -587,33 +596,35 @@ m4_forloop([:i:],0,8,[:case i:
            / skel_len;
 
          //
-         // Extreme bounds of P along perpendicular axis. The
-         // polynomial is
+         // Extreme bounds of P along the perpendicular axis.
          //
-         //   (1-t)*0 + t*0 + (1-t)*t*d_y = (1-t)*t*d_y
+         // The polynomial is (1-t)*0 + t*0 + (1-t)*t*d_y =
+         // (1-t)*t*d_y.
          //
          const intersection_real d_min =
-           (INTERSECTION_REAL_ZERO <= d_y)
-           ? -(intersection_real) INTERSECTION_DEFAULT_PADDING
-           : ((intersection_real) 0.25 * d_y
-              - (intersection_real) INTERSECTION_DEFAULT_PADDING);
+           (BEZIER_INTERSECTION_CHOOSE
+            (INTERSECTION_REAL_ZERO <= d_y,
+             -(intersection_real) INTERSECTION_DEFAULT_PADDING,
+             (intersection_real) 0.25 * d_y
+             - (intersection_real) INTERSECTION_DEFAULT_PADDING));
          const intersection_real d_max =
-           (INTERSECTION_REAL_ZERO <= d_y)
-           ? ((intersection_real) 0.25 * d_y
-              + (intersection_real) INTERSECTION_DEFAULT_PADDING)
-           : (intersection_real) INTERSECTION_DEFAULT_PADDING;
+           (BEZIER_INTERSECTION_CHOOSE
+            (INTERSECTION_REAL_ZERO <= d_y,
+             (intersection_real) 0.25 * d_y
+             + (intersection_real) INTERSECTION_DEFAULT_PADDING,
+             (intersection_real) INTERSECTION_DEFAULT_PADDING));
 
          // Project Q onto perpendicular distance to P's skeleton
          // line.
          const intersection_real q0_perp =
-           (-skel_dy * (q.p0.x - p.p0.x) + skel_dx * (q.p0.y - p.p0.y))
-           / skel_len;
+           (-skel_dy * (q.p0.x - p.p0.x)
+            + skel_dx * (q.p0.y - p.p0.y)) / skel_len;
          const intersection_real q2_perp =
-           (-skel_dy * (q.p2.x - p.p0.x) + skel_dx * (q.p2.y - p.p0.y))
-           / skel_len;
+           (-skel_dy * (q.p2.x - p.p0.x)
+            + skel_dx * (q.p2.y - p.p0.y)) / skel_len;
          const intersection_real qd_perp =
-           (-skel_dy * q.p1_delta.x + skel_dx * q.p1_delta.y)
-           / skel_len;
+           (-skel_dy * q.p1_delta.x
+            + skel_dx * q.p1_delta.y) / skel_len;
 
          //
          // Q's perpendicular coordinate polynomial:
@@ -630,10 +641,11 @@ m4_forloop([:i:],0,8,[:case i:
            (intersection_real_abs (a)
             <= (intersection_real) INTERSECTION_DEFAULT_VERYSMALL);
          const intersection_real v_vertex =
-           ((a_is_very_small)
-            ? (intersection_real_sgn (b) * intersection_real_sgn (a)
-               * HUGE_VAL)
-            : (-b / (a + a)));
+           (BEZIER_INTERSECTION_CHOOSE
+            (a_is_very_small,
+             intersection_real_sgn (b) * intersection_real_sgn (a)
+             * INTERSECTION_REAL_HUGE_VAL,
+             -b / (a + a)));
          const bool v_vertex_in_interval =
            ((INTERSECTION_REAL_ZERO < v_vertex) *
             (v_vertex < INTERSECTION_REAL_0NE));
@@ -642,21 +654,20 @@ m4_forloop([:i:],0,8,[:case i:
          const intersection_real v_max_0 =
            intersection_real_max (q0_perp, q2_perp);
          const intersection_real y_vertex =
-           (v_vertex_in_interval)
-           ? ((((a * v_vertex) + b) * v_vertex) + c)
-           : intersection_real_nan ();       
+           (BEZIER_INTERSECTION_CHOOSE
+            (v_vertex_in_interval,
+             ((((a * v_vertex) + b) * v_vertex) + c),
+             intersection_real_nan ()));
          const intersection_real v_min =
-           ((!v_vertex_in_interval)
-            ? v_min_0
-            : ((y_vertex < v_min_0)
-               ? y_vertex
-               : v_min_0));
+           (BEZIER_INTERSECTION_CHOOSE
+            ((!v_vertex_in_interval), v_min_0,
+             (BEZIER_INTERSECTION_CHOOSE ((y_vertex < v_min_0),
+                                          y_vertex, v_min_0))));
          const intersection_real v_max =
-           ((!v_vertex_in_interval)
-            ? v_max_0
-            : ((v_max_0 < y_vertex)
-               ? y_vertex
-               : v_max_0));
+           (BEZIER_INTERSECTION_CHOOSE
+            ((!v_vertex_in_interval), v_max_0,
+             (BEZIER_INTERSECTION_CHOOSE ((v_max_0 < y_vertex),
+                                          y_vertex, v_max_0))));
 
          if (!((v_min <= d_max) * (d_min <= v_max)))
            // Q's perpendicular band does not overlap P's fat line.
@@ -833,10 +844,11 @@ intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
         {
           const intersection_real k_real =
             intersection_real_sqrt (k_sq);
-          const size_t k = (((size_t) k_real == k_real)
-                            ? (size_t) k_real
-                            : (size_t) k_real + 1);
-          return (k <= 16) ? k : (size_t) 16;
+          const size_t k =
+            BEZIER_INTERSECTION_CHOOSE ((size_t) k_real == k_real,
+                                        (size_t) k_real,
+                                        (size_t) k_real + 1);
+          return BEZIER_INTERSECTION_CHOOSE (k <= 16, k, (size_t) 16);
         }
     }
 }
@@ -907,36 +919,43 @@ bezier_intersection_abs_tol (const intersection_real px0,
   const intersection_real coord_scale1 =
     intersection_real_abs (px0);
   const intersection_real coord_scale2 =
-   (intersection_real_abs (py0) > coord_scale1)
-    ? intersection_real_abs (py0)
-    : coord_scale1;
-    const intersection_real coord_scale3 =
-      (intersection_real_abs (px2) > coord_scale2)
-      ? intersection_real_abs (px2)
-      : coord_scale2;
-    const intersection_real coord_scale4 =
-      (intersection_real_abs (py2) > coord_scale3)
-      ? intersection_real_abs (py2)
-      : coord_scale3;
-    const intersection_real coord_scale5 =
-      (intersection_real_abs (qx0) > coord_scale4)
-      ? intersection_real_abs (qx0)
-      : coord_scale4;
-    const intersection_real coord_scale6 =
-      (intersection_real_abs (qy0) > coord_scale5)
-      ? intersection_real_abs (qy0)
-      : coord_scale5;
-    const intersection_real coord_scale7 =
-      (intersection_real_abs (qx2) > coord_scale6)
-      ? intersection_real_abs (qx2)
-      : coord_scale6;
-    const intersection_real coord_scale8 =
-      (intersection_real_abs (qy2) > coord_scale7)
-      ? intersection_real_abs (qy2)
-      : coord_scale7;
-    return ((coord_scale8 < INTERSECTION_REAL_0NE)
-            ? rel_tol
-            : (rel_tol * coord_scale8));
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (py0) > coord_scale1,
+     intersection_real_abs (py0),
+     coord_scale1);
+  const intersection_real coord_scale3 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (px2) > coord_scale2,
+     intersection_real_abs (px2),
+     coord_scale2);
+  const intersection_real coord_scale4 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (py2) > coord_scale3,
+     intersection_real_abs (py2),
+     coord_scale3);
+  const intersection_real coord_scale5 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (qx0) > coord_scale4,
+     intersection_real_abs (qx0),
+     coord_scale4);
+  const intersection_real coord_scale6 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (qy0) > coord_scale5,
+     intersection_real_abs (qy0),
+     coord_scale5);
+  const intersection_real coord_scale7 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (qx2) > coord_scale6,
+     intersection_real_abs (qx2),
+     coord_scale6);
+  const intersection_real coord_scale8 =
+    BEZIER_INTERSECTION_CHOOSE
+    (intersection_real_abs (qy2) > coord_scale7,
+     intersection_real_abs (qy2),
+     coord_scale7);
+  return (BEZIER_INTERSECTION_CHOOSE
+          (coord_scale8 < INTERSECTION_REAL_0NE,
+           rel_tol, rel_tol * coord_scale8));
 }
 
 BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_cubic
@@ -963,10 +982,10 @@ bezier_intersection_cubic_spower (const bool quadratic,
       const intersection_real_point pt0 = { .x = x0, .y = y0 };
       const intersection_real_point pt3 = { .x = x2, .y = y2 };
       const intersection_real_point q1_delta = {
-        .x = INTERSECTION_REAL_CHOOSE (spower, x1,
+        .x = BEZIER_INTERSECTION_CHOOSE (spower, x1,
                                        (INTERSECTION_REAL_TWO * x1)
                                        - x0 - x2),
-        .y = INTERSECTION_REAL_CHOOSE (spower, y1,
+        .y = BEZIER_INTERSECTION_CHOOSE (spower, y1,
                                        (INTERSECTION_REAL_TWO * y1)
                                        - y0 - y2)
       };
@@ -984,21 +1003,21 @@ bezier_intersection_cubic_spower (const bool quadratic,
       const intersection_real_point pt0 = { .x = x0, .y = y0 };
       const intersection_real_point pt3 = { .x = x3, .y = y3 };
       const intersection_real_point q1_delta = {
-        .x = (INTERSECTION_REAL_CHOOSE
+        .x = (BEZIER_INTERSECTION_CHOOSE
               (spower, x1, ((INTERSECTION_REAL_THREE * x1)
                             - (INTERSECTION_REAL_TWO * x0)
                             - x3))),
-        .y = (INTERSECTION_REAL_CHOOSE
+        .y = (BEZIER_INTERSECTION_CHOOSE
               (spower, y1, ((INTERSECTION_REAL_THREE * y1)
                             - (INTERSECTION_REAL_TWO * y0)
                             - y3)))
       };
       const intersection_real_point q2_delta = {
-        .x = (INTERSECTION_REAL_CHOOSE
+        .x = (BEZIER_INTERSECTION_CHOOSE
               (spower, x2, ((INTERSECTION_REAL_THREE * x2)
                             - x0
                             - (INTERSECTION_REAL_TWO * x3)))),
-        .y = (INTERSECTION_REAL_CHOOSE
+        .y = (BEZIER_INTERSECTION_CHOOSE
               (spower, y2, ((INTERSECTION_REAL_THREE * y2)
                             - y0
                             - (INTERSECTION_REAL_TWO * y3))))
