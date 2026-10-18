@@ -143,7 +143,6 @@ typedef INTERSECTION_REAL intersection_real;
 
 typedef struct
 {
-  bool degenerate;
   size_t n;
   intersection_real tp[9];  // p parameters
   intersection_real tq[9];  // q parameters
@@ -271,8 +270,7 @@ intersection_real_bound_0_1 (const intersection_real x)
 //----------------------------------------------------------------------
 
 BEZIER_INTERSECTION_2D_PRIVATE intersection_record
-make_intersection_record (const bool degenerate,
-                          const size_t n,
+make_intersection_record (const size_t n,
                           //
 m4_forloop(«i»,0,8,
 «                          const intersection_real tp«»i«»,
@@ -283,7 +281,6 @@ m4_forloop(«i»,0,8,
 m4_comma_newline_if_under_eight(i)»))
 {
   const intersection_record result = {
-    .degenerate = degenerate,
     .n = n,
 
 m4_forloop(«i»,0,8,
@@ -301,8 +298,7 @@ BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 empty_intersection_record (void)
 {
   const intersection_real nan = intersection_real_nan ();
-  return make_intersection_record (false, 0,
-                                   m4_forloop(«i»,0,16,«nan, »)nan);
+  return make_intersection_record (0, m4_forloop(«i»,0,16,«nan, »)nan);
 }
 
 BEZIER_INTERSECTION_2D_PRIVATE bool
@@ -347,7 +343,7 @@ intersection_record_add (const intersection_record rec,
 m4_forloop(«i»,0,8,
 «      case i:
           return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                    m4_ifelse(i,0,tp_bounded,rec.tp[0]),
                    m4_ifelse(i,1,tp_bounded,rec.tp[1]),
                    m4_ifelse(i,2,tp_bounded,rec.tp[2]),
@@ -1183,4 +1179,3 @@ bezier_intersection_2d (const bool p_quadratic,
 // mode: c
 // coding: utf-8
 // end:
-

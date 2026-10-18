@@ -113,7 +113,6 @@ typedef INTERSECTION_REAL intersection_real;
 
 typedef struct
 {
-  bool degenerate;
   size_t n;
   intersection_real tp[9];  // p parameters
   intersection_real tq[9];  // q parameters
@@ -241,8 +240,7 @@ intersection_real_bound_0_1 (const intersection_real x)
 //----------------------------------------------------------------------
 
 BEZIER_INTERSECTION_2D_PRIVATE intersection_record
-make_intersection_record (const bool degenerate,
-                          const size_t n,
+make_intersection_record (const size_t n,
                           //
                           const intersection_real tp0,
                           const intersection_real tp1,
@@ -265,7 +263,6 @@ make_intersection_record (const bool degenerate,
                           const intersection_real tq8)
 {
   const intersection_record result = {
-    .degenerate = degenerate,
     .n = n,
 
     .tp[0] = tp0,
@@ -295,8 +292,7 @@ BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 empty_intersection_record (void)
 {
   const intersection_real nan = intersection_real_nan ();
-  return make_intersection_record (false, 0,
-                                   nan, nan, nan, nan, nan, nan, nan,
+  return make_intersection_record (0, nan, nan, nan, nan, nan, nan, nan,
                                    nan, nan, nan, nan, nan, nan, nan,
                                    nan, nan, nan, nan);
 }
@@ -342,7 +338,7 @@ intersection_record_add (const intersection_record rec,
       {
       case 0:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   tp_bounded,
                   rec.tp[1],
                   rec.tp[2],
@@ -363,7 +359,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 1:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   tp_bounded,
                   rec.tp[2],
@@ -384,7 +380,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 2:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   tp_bounded,
@@ -405,7 +401,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 3:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -426,7 +422,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 4:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -447,7 +443,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 5:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -468,7 +464,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 6:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -489,7 +485,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 7:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -510,7 +506,7 @@ intersection_record_add (const intersection_record rec,
                   rec.tq[8]));
       case 8:
         return (make_intersection_record
-                  (rec.degenerate, rec.n + 1,
+                  (rec.n + 1,
                   rec.tp[0],
                   rec.tp[1],
                   rec.tp[2],
@@ -1427,4 +1423,3 @@ bezier_intersection_2d (const bool p_quadratic,
 // mode: c
 // coding: utf-8
 // end:
-

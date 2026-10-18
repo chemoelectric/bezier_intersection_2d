@@ -13,8 +13,7 @@ print_record (const char *label, intersection_record rec)
 {
   size_t i;
   printf ("=== %s ===\n", label);
-  printf ("degenerate: %s, found %zu intersection(s)\n",
-          rec.degenerate ? "true" : "false", rec.n);
+  printf ("found %zu intersection(s)\n", rec.n);
   for (i = 0; i < 9; i = i + 1)
     {
       if (isnan (rec.tp[i]))
