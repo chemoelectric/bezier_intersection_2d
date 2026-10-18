@@ -802,31 +802,33 @@ m4_forloop(«i»,0,8,«case i:
                                 accum0))));
                    }
                }
+             else
+               {
+                 // Apply clipped parameter sub-interval to Q
+                 // and swap roles for rapid convergence.
 
-             // Apply clipped parameter sub-interval to Q
-             // and swap roles for rapid convergence.
-             {
-               intersection_real_quadratic q_clipped;
-               // Add slight margin.
-               intersection_real m0;
-               intersection_real m1;
-               m0 = u.min - (intersection_real) 0.01;
-               m1 = u.max + (intersection_real) 0.01;
-               if (m0 < INTERSECTION_REAL_ZERO)
-                 m0 = INTERSECTION_REAL_ZERO;
-               if (m1 > INTERSECTION_REAL_0NE)
-                 m1 = INTERSECTION_REAL_0NE;
-               q_clipped = intersection_real_subdivide_quadratic (q, m0, m1);
-               // Swap roles (tail call).
-               return intersection_of_two_quadratics (q_clipped, p, rel_tol, abs_tol,
-                                                      depth + 1, accum0);
-             }
+                 // Add a slight margin, for safety.
+                 const intersection_real m0 =
+                   intersection_real_max (u.min - (intersection_real) 0.01,
+                                          INTERSECTION_REAL_ZERO);
+                 const intersection_real m1 =
+                   intersection_real_min (u.max + (intersection_real) 0.01,
+                                          INTERSECTION_REAL_0NE);
+
+                 const intersection_real_quadratic q_clipped =
+                   intersection_real_subdivide_quadratic (q, m0, m1);
+
+                 return intersection_of_two_quadratics (q_clipped, p,
+                                                        rel_tol, abs_tol,
+                                                        depth + 1, accum0);
+               }
            }
        }
    }
 
     case 9:
       return accum0;
+
     default:
       // Programmer error.
       abort ();
