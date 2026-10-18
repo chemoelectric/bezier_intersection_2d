@@ -117,15 +117,15 @@ typedef INTERSECTION_REAL intersection_real;
 #define INTERSECTION_MAXIMUM_DEPTH 60
 #endif
 
-#ifndef BEZIER_INTERSECTION_2D_STORAGECLASS
+#ifndef BEZIER_INTERSECTION_2D_PRIVATE
 #  if defined __GNUC__
 #    if defined __STDC_VERSION__ && 201710L < __STDC_VERSION__
-#      define BEZIER_INTERSECTION_2D_STORAGECLASS [[gnu::const]] static inline
+#      define BEZIER_INTERSECTION_2D_PRIVATE [[gnu::const]] static inline
 #    else
-#      define BEZIER_INTERSECTION_2D_STORAGECLASS __attribute__((__const__)) static inline
+#      define BEZIER_INTERSECTION_2D_PRIVATE __attribute__((__const__)) static inline
 #    endif
 #  else
-#    define BEZIER_INTERSECTION_2D_STORAGECLASS static inline
+#    define BEZIER_INTERSECTION_2D_PRIVATE static inline
 #  endif
 #endif
 
@@ -187,7 +187,7 @@ typedef struct
 #define BEZIER_INTERSECTION_CHOOSE(pred, iftrue, iffalse) \
   ((pred) ? (iftrue) : (iffalse))
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_nan (void)
 {
 #if defined(NAN)
@@ -197,13 +197,13 @@ intersection_real_nan (void)
 #endif
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_abs (const intersection_real x)
 {
   return BEZIER_INTERSECTION_CHOOSE (x < INTERSECTION_REAL_ZERO, -x, x);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_sgn (const intersection_real x)
 {
   return (BEZIER_INTERSECTION_CHOOSE
@@ -215,33 +215,33 @@ intersection_real_sgn (const intersection_real x)
             INTERSECTION_REAL_0NE)));
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_square (const intersection_real x)
 {
   return (x * x);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_sqrt (const intersection_real x)
 {
   return INTERSECTION_REAL_SQRT (x);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_min (const intersection_real x,
                        const intersection_real y)
 {
   return BEZIER_INTERSECTION_CHOOSE (x < y, x, y);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_max (const intersection_real x,
                        const intersection_real y)
 {
   return BEZIER_INTERSECTION_CHOOSE (x < y, y, x);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_bound_0_1 (const intersection_real x)
 {
   return (BEZIER_INTERSECTION_CHOOSE
@@ -254,7 +254,7 @@ intersection_real_bound_0_1 (const intersection_real x)
 
 //----------------------------------------------------------------------
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_record
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 make_intersection_record (const bool degenerate,
                           const size_t n,
                           //
@@ -281,7 +281,7 @@ m4_comma_newline_if_under_eight(i):])
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_record
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 empty_intersection_record (void)
 {
   const intersection_real nan = intersection_real_nan ();
@@ -289,7 +289,7 @@ empty_intersection_record (void)
                                    m4_forloop([:i:],0,16,[:nan, :])nan);
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS bool
+BEZIER_INTERSECTION_2D_PRIVATE bool
 intersection_record_contains (const intersection_record rec,
                               const intersection_real tp,
                               const intersection_real tq,
@@ -313,7 +313,7 @@ intersection_record_contains (const intersection_record rec,
     }
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_record
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 intersection_record_add (const intersection_record rec,
                          const intersection_real tp,
                          const intersection_real tq,
@@ -356,7 +356,7 @@ m4_forloop([:i:],0,8,
     }
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 intersection_real_distance_sq (const intersection_real_point a,
                                const intersection_real_point b)
 {
@@ -364,7 +364,7 @@ intersection_real_distance_sq (const intersection_real_point a,
           + intersection_real_square (b.y - a.y));
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_point
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_point
 intersection_real_eval_quadratic (const intersection_real_quadratic q,
                                   const intersection_real u)
 {
@@ -377,7 +377,7 @@ intersection_real_eval_quadratic (const intersection_real_quadratic q,
   return pt;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_quadratic
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_quadratic
 intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
                                        const intersection_real u0,
                                        const intersection_real u1)
@@ -416,7 +416,7 @@ intersection_real_subdivide_quadratic (const intersection_real_quadratic q,
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
+BEZIER_INTERSECTION_2D_PRIVATE const intersection_real_quadratic_roots
 make_intersection_real_quadratic_roots (void)
 {
   const intersection_real nan = intersection_real_nan ();
@@ -430,7 +430,7 @@ make_intersection_real_quadratic_roots (void)
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
+BEZIER_INTERSECTION_2D_PRIVATE const intersection_real_quadratic_roots
 intersection_real_quadratic_insert_root (const intersection_real_quadratic_roots qroots,
                                          const intersection_real new_root)
 {
@@ -486,7 +486,7 @@ intersection_real_quadratic_insert_root (const intersection_real_quadratic_roots
     }
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS const intersection_real_quadratic_roots
+BEZIER_INTERSECTION_2D_PRIVATE const intersection_real_quadratic_roots
 intersection_real_quadratic_roots_solve
 (const intersection_real_quadratic_roots qroots,
  const intersection_real a,
@@ -525,7 +525,7 @@ intersection_real_quadratic_roots_solve
     }
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_record
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 intersection_of_two_quadratics (const intersection_real_quadratic p,
                                 const intersection_real_quadratic q,
                                 const intersection_real rel_tol,
@@ -819,7 +819,7 @@ m4_forloop([:i:],0,8,[:case i:
 
 /* Number of sub-intervals required for cubic degree reduction:
  * E_K = ||Q1_delta - Q2_delta|| / (12 * sqrt(3) * K^2) <= tol */
-BEZIER_INTERSECTION_2D_STORAGECLASS size_t
+BEZIER_INTERSECTION_2D_PRIVATE size_t
 intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
                                       const intersection_real_point q2_delta,
                                       const intersection_real tol)
@@ -855,7 +855,7 @@ intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
 
 /* Evaluate cubic curve in s-power basis:
  * C(t) = (1-t)*P0 + t*P3 + (1-t)^2*t*Q1_delta + (1-t)*t^2*Q2_delta */
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_point
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_point
 intersection_real_eval_cubic (const intersection_real_point p0,
                               const intersection_real_point p3,
                               const intersection_real_point q1_delta,
@@ -875,7 +875,7 @@ intersection_real_eval_cubic (const intersection_real_point p0,
 }
 
 /* Extract optimal approximating quadratic arc for sub-interval [t0, t1] */
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_quadratic
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_quadratic
 intersection_real_cubic_to_quad_sub (const intersection_real_point p0,
                                      const intersection_real_point p3,
                                      const intersection_real_point q1_delta,
@@ -907,7 +907,7 @@ intersection_real_cubic_to_quad_sub (const intersection_real_point p0,
   return result;
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real
 bezier_intersection_abs_tol (const intersection_real px0,
                              const intersection_real py0,
                              const intersection_real px2,
@@ -960,7 +960,7 @@ bezier_intersection_abs_tol (const intersection_real px0,
            rel_tol, rel_tol * coord_scale8));
 }
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_real_cubic
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_cubic
 bezier_intersection_cubic_spower (const bool quadratic,
                                   const bool spower,
                                   const intersection_real x0,
@@ -1038,22 +1038,88 @@ bezier_intersection_cubic_spower (const bool quadratic,
     }
 }
 
-/* -------------------------------------------------------------------------
- * Primary Public Entry Point (Static Inline, Pure)
- * ------------------------------------------------------------------------- */
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
+bezier_intersection_2d_loop2 (const intersection_real rel_tol,
+                              const intersection_real abs_tol,
+                              const intersection_real_quadratic p_sub,
+                              const intersection_real_cubic q_cubic,
+                              const size_t iq,
+                              const intersection_record accum0)
+{
+  const size_t kq = q_cubic.num_subdivisions;
+  if (!((iq != kq) * (accum0.n != 9)))
+    return accum0;
+  else
+    {
+      const intersection_real tq0 =
+        (intersection_real) iq / (intersection_real) kq;
+      const intersection_real tq1 =
+        (intersection_real) (iq + 1) / (intersection_real) kq;
+      const intersection_real_quadratic q_sub =
+        (intersection_real_cubic_to_quad_sub
+         (q_cubic.pt0, q_cubic.pt3,
+          q_cubic.q1_delta, q_cubic.q2_delta, tq0, tq1));
+      const intersection_record accum1 =
+        (intersection_of_two_quadratics
+         (p_sub, q_sub, rel_tol, abs_tol, 0, accum0));
+      return bezier_intersection_2d_loop2 (rel_tol, abs_tol,
+                                           p_sub, q_cubic,
+                                           iq + 1, accum1);
+    }
+}
 
-BEZIER_INTERSECTION_2D_STORAGECLASS intersection_record
-bezier_intersection_2d (bool p_quadratic, bool p_spower,
-                        intersection_real px0, intersection_real py0,
-                        intersection_real px1, intersection_real py1,
-                        intersection_real px2, intersection_real py2,
-                        intersection_real px3, intersection_real py3,
-                        bool q_quadratic, bool q_spower,
-                        intersection_real qx0, intersection_real qy0,
-                        intersection_real qx1, intersection_real qy1,
-                        intersection_real qx2, intersection_real qy2,
-                        intersection_real qx3, intersection_real qy3,
-                        intersection_real rel_tol)
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
+bezier_intersection_2d_loop1 (const intersection_real rel_tol,
+                              const intersection_real abs_tol,
+                              const intersection_real_cubic p_cubic,
+                              const intersection_real_cubic q_cubic,
+                              const size_t ip,
+                              const intersection_record accum0)
+{
+  const size_t kp = p_cubic.num_subdivisions;
+  if (!((ip != kp) * (accum0.n != 9)))
+    return accum0;
+  else
+    {
+      const intersection_real tp0 =
+        (intersection_real) ip / (intersection_real) kp;
+      const intersection_real tp1 =
+        (intersection_real) (ip + 1) / (intersection_real) kp;
+      const intersection_real_quadratic p_sub =
+        (intersection_real_cubic_to_quad_sub
+         (p_cubic.pt0, p_cubic.pt3,
+          p_cubic.q1_delta, p_cubic.q2_delta, tp0, tp1));
+      const intersection_record accum1 =
+        bezier_intersection_2d_loop2 (rel_tol, abs_tol,
+                                      p_sub, q_cubic, 0, accum0);
+      return bezier_intersection_2d_loop1 (rel_tol, abs_tol,
+                                           p_cubic, q_cubic,
+                                           ip + 1, accum1);
+    }
+}
+
+BEZIER_INTERSECTION_2D_PRIVATE intersection_record
+bezier_intersection_2d (const bool p_quadratic,
+                        const bool p_spower,
+                        const intersection_real px0,
+                        const intersection_real py0,
+                        const intersection_real px1,
+                        const intersection_real py1,
+                        const intersection_real px2,
+                        const intersection_real py2,
+                        const intersection_real px3,
+                        const intersection_real py3,
+                        const bool q_quadratic,
+                        const bool q_spower,
+                        const intersection_real qx0,
+                        const intersection_real qy0,
+                        const intersection_real qx1,
+                        const intersection_real qy1,
+                        const intersection_real qx2,
+                        const intersection_real qy2,
+                        const intersection_real qx3,
+                        const intersection_real qy3,
+                        const intersection_real rel_tol)
 {
   if (rel_tol <= INTERSECTION_REAL_ZERO)
     return bezier_intersection_2d (p_quadratic, p_spower,
@@ -1070,7 +1136,6 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
         bezier_intersection_abs_tol (px0, py0, px2, py2,
                                      qx0, qy0, qx2, qy2,
                                      rel_tol);
-
       const intersection_real_cubic p_cubic =
         bezier_intersection_cubic_spower (p_quadratic, p_spower,
                                           px0, py0, px1, py1,
@@ -1079,71 +1144,17 @@ bezier_intersection_2d (bool p_quadratic, bool p_spower,
         bezier_intersection_cubic_spower (q_quadratic, q_spower,
                                           qx0, qy0, qx1, qy1,
                                           qx2, qy2, qx3, qy3, abs_tol);
-
-
-      intersection_real_point p_pt0;
-      intersection_real_point p_pt3;
-      intersection_real_point p_q1_delta;
-      intersection_real_point p_q2_delta;
-      intersection_real_point q_pt0;
-      intersection_real_point q_pt3;
-      intersection_real_point q_q1_delta;
-      intersection_real_point q_q2_delta;
-      int kp;
-      int kq;
-      int ip;
-      int iq;
-      p_pt0 = p_cubic.pt0;
-      p_pt3 = p_cubic.pt3;
-      p_q1_delta = p_cubic.q1_delta;
-      p_q2_delta = p_cubic.q2_delta;
-      kp = p_cubic.num_subdivisions;
-      q_pt0 = q_cubic.pt0;
-      q_pt3 = q_cubic.pt3;
-      q_q1_delta = q_cubic.q1_delta;
-      q_q2_delta = q_cubic.q2_delta;
-      kq = q_cubic.num_subdivisions;
-
-      /* Intersect all pairs of quadratic sub-arcs */
-      intersection_record accum = empty_intersection_record ();
-      for (ip = 0; (ip != kp) * (accum.n != 9); ip += 1)
-        {
-          intersection_real tp0;
-          intersection_real tp1;
-          intersection_real_quadratic p_sub;
-
-          tp0 = (intersection_real) ip / (intersection_real) kp;
-          tp1 = (intersection_real) (ip + 1) / (intersection_real) kp;
-          p_sub = (intersection_real_cubic_to_quad_sub
-                   (p_pt0, p_pt3, p_q1_delta,
-                    p_q2_delta, tp0, tp1));
-
-          for (iq = 0; (iq != kq) * (accum.n != 9); iq += 1)
-            {
-              intersection_real tq0;
-              intersection_real tq1;
-              intersection_real_quadratic q_sub;
-
-              tq0 = (intersection_real) iq / (intersection_real) kq;
-              tq1 = (intersection_real) (iq + 1) / (intersection_real) kq;
-              q_sub = (intersection_real_cubic_to_quad_sub
-                       (q_pt0, q_pt3, q_q1_delta,
-                        q_q2_delta, tq0, tq1));
-
-              accum = (intersection_of_two_quadratics
-                       (p_sub, q_sub, rel_tol, abs_tol, 0, accum));
-            }
-        }
-
-      return accum;      
+      const intersection_record accum0 = empty_intersection_record ();
+      return bezier_intersection_2d_loop1 (rel_tol, abs_tol,
+                                           p_cubic, q_cubic,
+                                           0, accum0);
     }
 }
 
-#endif /* BEZIER_INTERSECTION_2D_H__INCLUDED__ */
+#endif // BEZIER_INTERSECTION_2D_H__INCLUDED__
 
-/*
-  local variables:
-  mode: c
-  coding: utf-8
-  end:
-*/
+// local variables:
+// mode: c
+// coding: utf-8
+// end:
+
