@@ -51,25 +51,35 @@
 
 m4_divert(-1)
 
-m4_changequote(`[:',`:]')
+m4_changequote(`«',`»')
 m4_changecom
 
-m4_define([:m4_comma_newline_if_under_eight:],
-  [:m4_ifelse(m4_eval([:($1) <= 7:]),[:1:],
-[:,
-:],[::]):])
+m4_define(«m4_comma_newline_if_under_eight»,
+  «m4_ifelse(m4_eval(«($1) <= 7»),«1»,
+«,
+»,«»)»)
+
+m4_dnl
+m4_dnl  m4_foreachq(x, «item_1, item_2, ..., item_n», statement)
+m4_dnl
+m4_define(«m4_foreachq»,
+  «m4_ifelse(«$2»,«»,«»,
+    «m4_pushdef(«$1»)_$0(«$1»,«$3»,«»,$2)m4_popdef(«$1»)»)»)
+m4_define(«_m4_foreachq»,
+  «m4_ifelse(«$#»,«3»,«»,
+    «m4_define(«$1»,«$4»)$2«»$0(«$1»,«$2»,m4_shift(m4_shift(m4_shift($@))))»)»)
 
 m4_dnl
 m4_dnl  m4_forloop(variable, from, to, statement)
 m4_dnl
-m4_define([:m4_forloop:],[:m4_ifelse(m4_eval([:($2) <= ($3):]),[:1:],
-  [:m4_pushdef([:$1:])_$0([:$1:],m4_eval([:$2:]),
-    m4_eval([:$3:]),[:$4:])m4_popdef([:$1:]):]):])
-m4_define([:_m4_forloop:],
-  [:m4_define([:$1:],[:$2:])$4[::]m4_ifelse([:$2:],[:$3:],[::],
-    [:$0([:$1:],m4_incr([:$2:]),[:$3:],[:$4:]):]):])
+m4_define(«m4_forloop»,«m4_ifelse(m4_eval(«($2) <= ($3)»),«1»,
+  «m4_pushdef(«$1»)_$0(«$1»,m4_eval(«$2»),
+    m4_eval(«$3»),«$4»)m4_popdef(«$1»)»)»)
+m4_define(«_m4_forloop»,
+  «m4_define(«$1»,«$2»)$4«»m4_ifelse(«$2»,«$3»,«»,
+    «$0(«$1»,m4_incr(«$2»),«$3»,«$4»)»)»)
 
-m4_divert[::]m4_dnl
+m4_divert«»m4_dnl
 
 #ifndef BEZIER_INTERSECTION_2D_H__INCLUDED__
 #define BEZIER_INTERSECTION_2D_H__INCLUDED__
@@ -140,6 +150,12 @@ typedef struct
 } intersection_record;
 
 //----------------------------------------------------------------------
+
+typedef struct
+{
+  intersection_real min;
+  intersection_real max;
+} intersection_real_interval;
 
 // A point in the plane.
 typedef struct
@@ -258,25 +274,25 @@ BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 make_intersection_record (const bool degenerate,
                           const size_t n,
                           //
-m4_forloop([:i:],0,8,
-[:                          const intersection_real tp[::]i[::],
-:])m4_dnl
+m4_forloop(«i»,0,8,
+«                          const intersection_real tp«»i«»,
+»)m4_dnl
                           //
-m4_forloop([:i:],0,8,
-[:                          const intersection_real tq[::]i[::]m4_dnl
-m4_comma_newline_if_under_eight(i):]))
+m4_forloop(«i»,0,8,
+«                          const intersection_real tq«»i«»m4_dnl
+m4_comma_newline_if_under_eight(i)»))
 {
   const intersection_record result = {
     .degenerate = degenerate,
     .n = n,
 
-m4_forloop([:i:],0,8,
-[:    .tp[i] = tp[::]i[::],
-:])m4_dnl
+m4_forloop(«i»,0,8,
+«    .tp[i] = tp«»i«»,
+»)m4_dnl
 
-m4_forloop([:i:],0,8,
-[:    .tq[i] = tq[::]i[::]m4_dnl
-m4_comma_newline_if_under_eight(i):])
+m4_forloop(«i»,0,8,
+«    .tq[i] = tq«»i«»m4_dnl
+m4_comma_newline_if_under_eight(i)»)
   };
   return result;
 }
@@ -286,7 +302,7 @@ empty_intersection_record (void)
 {
   const intersection_real nan = intersection_real_nan ();
   return make_intersection_record (false, 0,
-                                   m4_forloop([:i:],0,16,[:nan, :])nan);
+                                   m4_forloop(«i»,0,16,«nan, »)nan);
 }
 
 BEZIER_INTERSECTION_2D_PRIVATE bool
@@ -302,10 +318,10 @@ intersection_record_contains (const intersection_record rec,
     {
       const intersection_real dp =
         BEZIER_INTERSECTION_CHOOSE (tp < rec.tp[i], rec.tp[i] - tp,
-                                  tp - rec.tp[i]);
+                                    tp - rec.tp[i]);
       const intersection_real dq =
         BEZIER_INTERSECTION_CHOOSE (tq < rec.tq[i], rec.tq[i] - tq,
-                                  tq - rec.tq[i]);
+                                    tq - rec.tq[i]);
       if (dp <= tol && dq <= tol)
         return true;
       else
@@ -328,8 +344,8 @@ intersection_record_add (const intersection_record rec,
   else
     switch (rec.n)
       {
-m4_forloop([:i:],0,8,
-[:      case i:
+m4_forloop(«i»,0,8,
+«      case i:
           return (make_intersection_record
                   (rec.degenerate, rec.n + 1,
                    m4_ifelse(i,0,tp_bounded,rec.tp[0]),
@@ -350,7 +366,7 @@ m4_forloop([:i:],0,8,
                    m4_ifelse(i,6,tq_bounded,rec.tq[6]),
                    m4_ifelse(i,7,tq_bounded,rec.tq[7]),
                    m4_ifelse(i,8,tq_bounded,rec.tq[8])));
-:])m4_dnl
+»)m4_dnl
         default:
           return rec;
     }
@@ -525,6 +541,69 @@ intersection_real_quadratic_roots_solve
     }
 }
 
+BEZIER_INTERSECTION_2D_PRIVATE intersection_real_interval
+intersection_real_clipped_param_interval (const intersection_real d_min,
+                                          const intersection_real d_max,
+                                          const intersection_real q0_perp,
+                                          const intersection_real q2_perp,
+                                          const intersection_real_quadratic_roots qroots)
+{
+  // Find clipped parameter interval on Q.
+
+  // Candidate parameter bounds from valid roots in
+  // [0,1].
+  const intersection_real inside_min1 = INTERSECTION_REAL_0NE;
+  const intersection_real inside_max1 = INTERSECTION_REAL_ZERO;
+  const bool has_inside1 = false;
+
+  const bool b1 = ((d_min <= q0_perp) * (q0_perp <= d_max));
+  const intersection_real inside_min2 =
+    BEZIER_INTERSECTION_CHOOSE (b1, INTERSECTION_REAL_ZERO, inside_min1);
+  const intersection_real inside_max2 =
+    BEZIER_INTERSECTION_CHOOSE (b1, INTERSECTION_REAL_ZERO, inside_max1);
+  const bool has_inside2 =
+    BEZIER_INTERSECTION_CHOOSE (b1, true, has_inside1);
+
+  const bool b2 = ((d_min <= q2_perp) * (q2_perp <= d_max));
+  const intersection_real inside_min3 =
+    BEZIER_INTERSECTION_CHOOSE
+    (b2 && (!has_inside2 || INTERSECTION_REAL_0NE < inside_min2),
+     INTERSECTION_REAL_0NE, inside_min2);
+  const intersection_real inside_max3 =
+    BEZIER_INTERSECTION_CHOOSE
+    (b2 && (!has_inside2 || inside_max2 < INTERSECTION_REAL_0NE),
+     INTERSECTION_REAL_0NE, inside_max2);
+  const bool has_inside3 =
+    BEZIER_INTERSECTION_CHOOSE (b2, true, has_inside2);
+
+  m4_foreachq(«k»,«0,1,2,3»,«
+const intersection_real r«»k = qroots.root«»k;
+const bool root_exists«»k = (m4_eval(k + 1) <= qroots.nroots);
+const bool root_in_01_«»k = ((root_exists«»k)
+                             * (INTERSECTION_REAL_ZERO <= r«»k)
+                             * (r«»k <= INTERSECTION_REAL_0NE));
+const intersection_real inside_min«»m4_eval(k + 4) =
+             BEZIER_INTERSECTION_CHOOSE (root_in_01_«»k
+                                         && (!has_inside«»m4_eval(k + 3) || r«»k < inside_min«»m4_eval(k + 3)),
+                                         r«»k, inside_min«»m4_eval(k + 3));
+const intersection_real inside_max«»m4_eval(k + 4) =
+             BEZIER_INTERSECTION_CHOOSE (root_in_01_«»k
+                                         && (!has_inside«»m4_eval(k + 3) || inside_max«»m4_eval(k + 3) < r«»k),
+                                         r«»k, inside_max«»m4_eval(k + 3));
+ const bool has_inside«»m4_eval(k + 4) =
+             BEZIER_INTERSECTION_CHOOSE (root_in_01_«»k, true, has_inside«»m4_eval(k + 3));
+              »)
+
+  const intersection_real_interval result = {
+  .min = BEZIER_INTERSECTION_CHOOSE (has_inside7, inside_min7,
+                                     INTERSECTION_REAL_ZERO),
+  .max = BEZIER_INTERSECTION_CHOOSE (has_inside7, inside_max7,
+                                     INTERSECTION_REAL_0NE)
+};
+
+ return result;
+}
+
 BEZIER_INTERSECTION_2D_PRIVATE intersection_record
 intersection_of_two_quadratics (const intersection_real_quadratic p,
                                 const intersection_real_quadratic q,
@@ -535,8 +614,8 @@ intersection_of_two_quadratics (const intersection_real_quadratic p,
 {
   switch (accum0.n)
     {
-m4_forloop([:i:],0,8,[:case i:
-                      :])
+m4_forloop(«i»,0,8,«case i:
+                      »)
  const intersection_real p_span = p.t_max - p.t_min;
  const intersection_real q_span = q.t_max - q.t_min;
 
@@ -674,132 +753,73 @@ m4_forloop([:i:],0,8,[:case i:
            return accum0;
          else
            {
-             // Find clipped parameter interval [u_min, u_max] on Q.
-             intersection_real u_min = INTERSECTION_REAL_ZERO;
-             intersection_real u_max = INTERSECTION_REAL_0NE;
-
              // Intersect quadratic polynomial with d_min and d_max.
+             const intersection_real_quadratic_roots qroots =
+               intersection_real_quadratic_roots_solve
+               (intersection_real_quadratic_roots_solve
+                (make_intersection_real_quadratic_roots (),
+                 a, b, c - d_min),
+                a, b, c - d_max);
+
+             const intersection_real_interval u =
+               intersection_real_clipped_param_interval
+               (d_min, d_max, q0_perp, q2_perp, qroots);
+
+             // If clipping achieved poor progress (reduction < 20%),
+             // subdivide the larger curve.
+             if ((intersection_real) 0.8 < (u.max - u.min))
+               {
+                 if (q_span <= p_span)
+                   {
+                     const intersection_real_quadratic p_left =
+                       intersection_real_subdivide_quadratic
+                       (p, INTERSECTION_REAL_ZERO,
+                        INTERSECTION_REAL_HALF);
+                     const intersection_real_quadratic p_right =
+                       intersection_real_subdivide_quadratic
+                       (p, INTERSECTION_REAL_HALF,
+                        INTERSECTION_REAL_0NE);
+                     return (intersection_of_two_quadratics
+                             (p_right, q, rel_tol, abs_tol, depth + 1,
+                              (intersection_of_two_quadratics
+                               (p_left, q, rel_tol, abs_tol, depth + 1,
+                                accum0))));
+                   }
+                 else
+                   {
+                     intersection_real_quadratic q_left =
+                       intersection_real_subdivide_quadratic
+                       (q, INTERSECTION_REAL_ZERO,
+                        INTERSECTION_REAL_HALF);
+                     intersection_real_quadratic q_right =
+                       intersection_real_subdivide_quadratic
+                       (q, INTERSECTION_REAL_HALF,
+                        INTERSECTION_REAL_0NE);
+                     return (intersection_of_two_quadratics
+                             (p, q_right, rel_tol, abs_tol, depth + 1,
+                              (intersection_of_two_quadratics
+                               (p, q_left, rel_tol, abs_tol, depth + 1,
+                                accum0))));
+                   }
+               }
+
+             // Apply clipped parameter sub-interval to Q
+             // and swap roles for rapid convergence.
              {
-               const intersection_real_quadratic_roots qroots =
-                 intersection_real_quadratic_roots_solve
-                 (intersection_real_quadratic_roots_solve
-                  (make_intersection_real_quadratic_roots (),
-                   a, b, c - d_min),
-                  a, b, c - d_max);
-
-               intersection_real roots[4] = {
-                 [0] = qroots.root0,
-                 [1] = qroots.root1,
-                 [2] = qroots.root2,
-                 [3] = qroots.root3
-               };
-               int nroots = qroots.nroots;
-               int k;
-
-               // Candidate parameter bounds from valid roots in
-               // [0,1].
-               {
-                 intersection_real inside_min;
-                 intersection_real inside_max;
-                 bool has_inside;
-
-                 inside_min = INTERSECTION_REAL_0NE;
-                 inside_max = INTERSECTION_REAL_ZERO;
-                 has_inside = false;
-
-                 if (q0_perp >= d_min && q0_perp <= d_max)
-                   {
-                     inside_min = INTERSECTION_REAL_ZERO;
-                     inside_max = INTERSECTION_REAL_ZERO;
-                     has_inside = true;
-                   }
-                 if (q2_perp >= d_min && q2_perp <= d_max)
-                   {
-                     if (!has_inside || INTERSECTION_REAL_0NE < inside_min)
-                       inside_min = INTERSECTION_REAL_0NE;
-                     if (!has_inside || INTERSECTION_REAL_0NE > inside_max)
-                       inside_max = INTERSECTION_REAL_0NE;
-                     has_inside = true;
-                   }
-
-                 for (k = 0; k != nroots; k += 1)
-                   {
-                     intersection_real r;
-                     r = roots[k];
-                     if (r >= INTERSECTION_REAL_ZERO &&
-                         r <= INTERSECTION_REAL_0NE)
-                       {
-                         if (!has_inside || r < inside_min)
-                           inside_min = r;
-                         if (!has_inside || r > inside_max)
-                           inside_max = r;
-                         has_inside = true;
-                       }
-                   }
-
-                 if (has_inside)
-                   {
-                     u_min = inside_min;
-                     u_max = inside_max;
-                   }
-               }
-
-               // If clipping achieved poor progress (reduction < 20%),
-               // subdivide the larger curve.
-               if ((u_max - u_min) > (intersection_real) 0.8)
-                 {
-                   if (p_span >= q_span)
-                     {
-                       const intersection_real_quadratic p_left =
-                         intersection_real_subdivide_quadratic
-                         (p, INTERSECTION_REAL_ZERO,
-                          INTERSECTION_REAL_HALF);
-                       const intersection_real_quadratic p_right =
-                         intersection_real_subdivide_quadratic
-                         (p, INTERSECTION_REAL_HALF,
-                          INTERSECTION_REAL_0NE);
-                       return (intersection_of_two_quadratics
-                               (p_right, q, rel_tol, abs_tol, depth + 1,
-                                (intersection_of_two_quadratics
-                                 (p_left, q, rel_tol, abs_tol, depth + 1,
-                                  accum0))));
-                     }
-                   else
-                     {
-                       intersection_real_quadratic q_left =
-                         intersection_real_subdivide_quadratic
-                         (q, INTERSECTION_REAL_ZERO,
-                          INTERSECTION_REAL_HALF);
-                       intersection_real_quadratic q_right =
-                         intersection_real_subdivide_quadratic
-                         (q, INTERSECTION_REAL_HALF,
-                          INTERSECTION_REAL_0NE);
-                       return (intersection_of_two_quadratics
-                               (p, q_right, rel_tol, abs_tol, depth + 1,
-                                (intersection_of_two_quadratics
-                                 (p, q_left, rel_tol, abs_tol, depth + 1,
-                                  accum0))));
-                     }
-                 }
-
-               // Apply clipped parameter sub-interval to Q
-               // and swap roles for rapid convergence.
-               {
-                 intersection_real_quadratic q_clipped;
-                 // Add slight margin.
-                 intersection_real m0;
-                 intersection_real m1;
-                 m0 = u_min - (intersection_real) 0.01;
-                 m1 = u_max + (intersection_real) 0.01;
-                 if (m0 < INTERSECTION_REAL_ZERO)
-                   m0 = INTERSECTION_REAL_ZERO;
-                 if (m1 > INTERSECTION_REAL_0NE)
-                   m1 = INTERSECTION_REAL_0NE;
-                 q_clipped = intersection_real_subdivide_quadratic (q, m0, m1);
-                 // Swap roles (tail call).
-                 return intersection_of_two_quadratics (q_clipped, p, rel_tol, abs_tol,
-                                                        depth + 1, accum0);
-               }
+               intersection_real_quadratic q_clipped;
+               // Add slight margin.
+               intersection_real m0;
+               intersection_real m1;
+               m0 = u.min - (intersection_real) 0.01;
+               m1 = u.max + (intersection_real) 0.01;
+               if (m0 < INTERSECTION_REAL_ZERO)
+                 m0 = INTERSECTION_REAL_ZERO;
+               if (m1 > INTERSECTION_REAL_0NE)
+                 m1 = INTERSECTION_REAL_0NE;
+               q_clipped = intersection_real_subdivide_quadratic (q, m0, m1);
+               // Swap roles (tail call).
+               return intersection_of_two_quadratics (q_clipped, p, rel_tol, abs_tol,
+                                                      depth + 1, accum0);
              }
            }
        }
@@ -813,18 +833,17 @@ m4_forloop([:i:],0,8,[:case i:
     }
 }
 
-/* -------------------------------------------------------------------------
- * Cubic Decomposition into Quadratic Arcs in s-power Basis
- * ------------------------------------------------------------------------- */
-
-/* Number of sub-intervals required for cubic degree reduction:
- * E_K = ||Q1_delta - Q2_delta|| / (12 * sqrt(3) * K^2) <= tol */
 BEZIER_INTERSECTION_2D_PRIVATE size_t
 intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
                                       const intersection_real_point q2_delta,
                                       const intersection_real tol)
 {
-  size_t k;
+  //
+  // Decomposition of an s-power cubic curve into quadratic arcs.
+  // Compute how many arcs will be needed.
+  //
+  // E_K = ||Q1_delta - Q2_delta|| / (12 * sqrt(3) * K^2) <= tol
+  //
 
   const intersection_real diff_x = q1_delta.x - q2_delta.x;
   const intersection_real diff_y = q1_delta.y - q2_delta.y;
@@ -853,8 +872,6 @@ intersection_real_cubic_subdivisions (const intersection_real_point q1_delta,
     }
 }
 
-/* Evaluate cubic curve in s-power basis:
- * C(t) = (1-t)*P0 + t*P3 + (1-t)^2*t*Q1_delta + (1-t)*t^2*Q2_delta */
 BEZIER_INTERSECTION_2D_PRIVATE intersection_real_point
 intersection_real_eval_cubic (const intersection_real_point p0,
                               const intersection_real_point p3,
@@ -862,6 +879,11 @@ intersection_real_eval_cubic (const intersection_real_point p0,
                               const intersection_real_point q2_delta,
                               const intersection_real t)
 {
+  //
+  // Evaluate a parametric s-power cubic curve.
+  //
+  // C(t) = (1-t)*P0 + t*P3 + (1-t)^2*t*Q1_delta + (1-t)*t^2*Q2_delta
+  //
   const intersection_real s = INTERSECTION_REAL_0NE - t;
   const intersection_real b1 = s * s * t;
   const intersection_real b2 = s * t * t;
@@ -874,7 +896,6 @@ intersection_real_eval_cubic (const intersection_real_point p0,
   return pt;
 }
 
-/* Extract optimal approximating quadratic arc for sub-interval [t0, t1] */
 BEZIER_INTERSECTION_2D_PRIVATE intersection_real_quadratic
 intersection_real_cubic_to_quad_sub (const intersection_real_point p0,
                                      const intersection_real_point p3,
@@ -883,6 +904,12 @@ intersection_real_cubic_to_quad_sub (const intersection_real_point p0,
                                      const intersection_real t0,
                                      const intersection_real t1)
 {
+  //
+  // Decomposition of an s-power cubic curve into quadratic arcs.
+  //
+  // Extract an optimum approximating quadratic arc for the interval
+  // [t0,t1].
+  //
   const intersection_real_point q_p0 =
     intersection_real_eval_cubic (p0, p3, q1_delta, q2_delta, t0);
   const intersection_real_point q_p2 =
@@ -978,18 +1005,15 @@ bezier_intersection_cubic_spower (const bool quadratic,
   //
   // Include a count of how many quadratic subdivisions to construct.
   //
-
   if (quadratic)
     {
       const intersection_real_point pt0 = { .x = x0, .y = y0 };
       const intersection_real_point pt3 = { .x = x2, .y = y2 };
       const intersection_real_point q1_delta = {
         .x = BEZIER_INTERSECTION_CHOOSE (spower, x1,
-                                       (INTERSECTION_REAL_TWO * x1)
-                                       - x0 - x2),
+                                         (x1 + x1) - x0 - x2),
         .y = BEZIER_INTERSECTION_CHOOSE (spower, y1,
-                                       (INTERSECTION_REAL_TWO * y1)
-                                       - y0 - y2)
+                                         (y1 + y1) - y0 - y2)
       };
       const intersection_real_cubic result = {
         .pt0 = pt0,
