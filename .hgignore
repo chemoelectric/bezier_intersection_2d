@@ -1,5 +1,7 @@
 .*~$
 .*\.orig$
-^autom4te\.cache$
+
 ^___build___$
-^README\.html$
+
+.*\.(o|ali)$
+^ada/bezier_intersections$
