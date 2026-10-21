@@ -79,15 +79,15 @@
 
 #define BZX2D_CHOOSE(pred,T,F) ((pred)?(T):(F))
 
-#ifndef BZX2D_PRIVATE
+#ifndef BZX2D_CONST
 #  ifdef __GNUC__
 #    if defined __STDC_VERSION__ && 201710L < __STDC_VERSION__
-#      define BZX2D_PRIVATE [[gnu::const]] static inline
+#      define BZX2D_CONST [[gnu::const]] static inline
 #    else
-#      define BZX2D_PRIVATE __attribute__((__const__)) static inline
+#      define BZX2D_CONST __attribute__((__const__)) static inline
 #    endif
 #  else
-#    define BZX2D_PRIVATE static inline
+#    define BZX2D_CONST static inline
 #  endif
 #endif
 
@@ -104,6 +104,12 @@ typedef struct
   const double min;
   const double max;
 } bzx2d_double_interval;
+
+typedef struct
+{
+  const double ta;
+  const double tb;
+} bzx2d_parameter_pair;
 
 typedef struct
 {
@@ -230,13 +236,13 @@ typedef struct
 
 //----------------------------------------------------------------------
 
-BZX2D_PRIVATE bool
+BZX2D_CONST bool
 bzx2d_between_0_and_1 (const double x)
 {
   return (0.0 <= x) * (x <= 1.0);
 }
 
-BZX2D_PRIVATE bzx2d_quadratic_formula_result
+BZX2D_CONST bzx2d_quadratic_formula_result
 bzx2d_quadratic_formula (const double a,
                          const double b,
                          const double c)
@@ -340,7 +346,7 @@ bzx2d_quadratic_formula (const double a,
     }
 }
 
-BZX2D_PRIVATE double
+BZX2D_CONST double
 bzx2d_eval_spower_poly2 (const bzx2d_spower_poly2 poly,
                          const double t)
 {
@@ -351,7 +357,7 @@ bzx2d_eval_spower_poly2 (const bzx2d_spower_poly2 poly,
       poly.c2 + ((1.0 - t) * ((poly.c0 - poly.c2) + (t * poly.c1)))));
 }
 
-BZX2D_PRIVATE bzx2d_point
+BZX2D_CONST bzx2d_point
 bzx2d_eval_spower_curve2 (const bzx2d_spower_curve2 curve,
                           const double t)
 {
@@ -362,7 +368,7 @@ bzx2d_eval_spower_curve2 (const bzx2d_spower_curve2 curve,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_spower_curve2
+BZX2D_CONST bzx2d_spower_curve2
 bzx2d_to_spower_curve (const bzx2d_control_point_curve2 ctrl)
 {
   const double pt0_x = (double) ctrl.pt0.x;
@@ -386,7 +392,7 @@ bzx2d_to_spower_curve (const bzx2d_control_point_curve2 ctrl)
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_dpoint
+BZX2D_CONST bzx2d_dpoint
 bzx2d_sub_opoint_opoint (const bzx2d_opoint pt1,
                          const bzx2d_opoint pt2)
 {
@@ -397,7 +403,7 @@ bzx2d_sub_opoint_opoint (const bzx2d_opoint pt1,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_opoint
+BZX2D_CONST bzx2d_opoint
 bzx2d_add_opoint_dpoint (const bzx2d_opoint opt,
                          const bzx2d_dpoint dpt)
 {
@@ -408,7 +414,7 @@ bzx2d_add_opoint_dpoint (const bzx2d_opoint opt,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_dpoint
+BZX2D_CONST bzx2d_dpoint
 bzx2d_add_dpoint_dpoint (const bzx2d_dpoint pt1,
                          const bzx2d_dpoint pt2)
 {
@@ -419,7 +425,7 @@ bzx2d_add_dpoint_dpoint (const bzx2d_dpoint pt1,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_dpoint
+BZX2D_CONST bzx2d_dpoint
 bzx2d_mul_scalar_dpoint (const double scalar,
                          const bzx2d_dpoint pt)
 {
@@ -430,7 +436,7 @@ bzx2d_mul_scalar_dpoint (const double scalar,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_geocurve2
+BZX2D_CONST bzx2d_geocurve2
 bzx2d_to_geocurve (const bzx2d_spower_curve2 scurve)
 {
   const bzx2d_geocurve2 result = {
@@ -452,7 +458,7 @@ bzx2d_to_geocurve (const bzx2d_spower_curve2 scurve)
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_opoint
+BZX2D_CONST bzx2d_opoint
 bzx2d_eval_geocurve2 (const bzx2d_geocurve2 gcurve,
                       const double t)
 {
@@ -479,7 +485,7 @@ bzx2d_eval_geocurve2 (const bzx2d_geocurve2 gcurve,
           bzx2d_mul_scalar_dpoint (t, gcurve.pt1)))))));
 }
 
-BZX2D_PRIVATE bzx2d_opoint
+BZX2D_CONST bzx2d_opoint
 bzx2d_project_opoint (const bzx2d_opoint pt,
                       const bzx2d_affine_projection trans)
 {
@@ -500,7 +506,7 @@ bzx2d_project_opoint (const bzx2d_opoint pt,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_dpoint
+BZX2D_CONST bzx2d_dpoint
 bzx2d_project_dpoint (const bzx2d_dpoint pt,
                       const bzx2d_affine_projection trans)
 {
@@ -522,7 +528,7 @@ bzx2d_project_dpoint (const bzx2d_dpoint pt,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_geocurve2
+BZX2D_CONST bzx2d_geocurve2
 bzx2d_project_geocurve2 (const bzx2d_geocurve2 gcurve,
                          const bzx2d_affine_projection trans)
 {
@@ -540,7 +546,7 @@ bzx2d_project_geocurve2 (const bzx2d_geocurve2 gcurve,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_affine_projection
+BZX2D_CONST bzx2d_affine_projection
 bzx2d_segment_projection_to_0_1 (const bzx2d_opoint pt0,
                                  const bzx2d_opoint pt1)
 {
@@ -565,7 +571,7 @@ bzx2d_segment_projection_to_0_1 (const bzx2d_opoint pt0,
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_affine_projection
+BZX2D_CONST bzx2d_affine_projection
 bzx2d_skeleton_projection (const bzx2d_geocurve2 clipper)
 {
   //
@@ -576,7 +582,7 @@ bzx2d_skeleton_projection (const bzx2d_geocurve2 clipper)
   return bzx2d_segment_projection_to_0_1 (clipper.pt0, clipper.pt2);
 }
 
-BZX2D_PRIVATE bzx2d_double_interval
+BZX2D_CONST bzx2d_double_interval
 bzx2d_fat_line_bounds (const bzx2d_geocurve2 projected_clipper)
 {
   //
@@ -602,7 +608,7 @@ bzx2d_fat_line_bounds (const bzx2d_geocurve2 projected_clipper)
   return result;
 }
 
-BZX2D_PRIVATE bool
+BZX2D_CONST bool
 bzx2d_outside_of_bounds (const bzx2d_geocurve2 projected_clippehend,
                          const bzx2d_double_interval d)
 {
@@ -618,7 +624,7 @@ bzx2d_outside_of_bounds (const bzx2d_geocurve2 projected_clippehend,
   return (ymax <= d.min || d.max <= ymin);
 }
 
-BZX2D_PRIVATE bzx2d_crossings
+BZX2D_CONST bzx2d_crossings
 bzx2d_make_crossings (void)
 {
   const double nan_ = (double) BZX2D_NAN;
@@ -640,7 +646,7 @@ bzx2d_make_crossings (void)
   return result;
 }
 
-BZX2D_PRIVATE bzx2d_crossings
+BZX2D_CONST bzx2d_crossings
 bzx2d_add_crossing (const double t,
                     const double yvalue,
                     const bzx2d_crossings crossings0)
@@ -729,7 +735,7 @@ bzx2d_add_crossing (const double t,
     }
 }
 
-BZX2D_PRIVATE bzx2d_crossings
+BZX2D_CONST bzx2d_crossings
 bzx2d_find_crossings (const double c0,
                       const double c1,
                       const double c2,
@@ -753,7 +759,7 @@ bzx2d_find_crossings (const double c0,
   return crossings2;
 }
 
-BZX2D_PRIVATE bzx2d_clipping_plan
+BZX2D_CONST bzx2d_clipping_plan
 bzx2d_create_a_clipping_plan (const bzx2d_crossings crossings)
 {
   //
@@ -785,7 +791,7 @@ bzx2d_create_a_clipping_plan (const bzx2d_crossings crossings)
     }
 }
 
-BZX2D_PRIVATE bzx2d_clipping_plan
+BZX2D_CONST bzx2d_clipping_plan
 bzx2d_analyze_and_plan (const bzx2d_geocurve2 projected_clippehend,
                         const bzx2d_double_interval d)
 {
@@ -800,7 +806,7 @@ bzx2d_analyze_and_plan (const bzx2d_geocurve2 projected_clippehend,
   return bzx2d_create_a_clipping_plan (crossings2);
 }
 
-BZX2D_PRIVATE bzx2d_clipping_plan
+BZX2D_CONST bzx2d_clipping_plan
 bzx2d_make_clipping_plan (const bzx2d_geocurve2 projected_clippehend,
                           const bzx2d_double_interval d)
 {
@@ -816,6 +822,84 @@ bzx2d_make_clipping_plan (const bzx2d_geocurve2 projected_clippehend,
     }
   else
     return bzx2d_analyze_and_plan (projected_clippehend, d);
+}
+
+BZX2D_CONST bzx2d_geocurve2
+bzx2d_make_portion (const bzx2d_geocurve2 gcurve,
+                    const double t0,
+                    const double t1)
+{
+  //
+  // Change of parameter of an s-power spline.
+  //
+  const bzx2d_opoint pt0 = bzx2d_eval_geocurve2 (gcurve, t0);
+  const bzx2d_dpoint pt1 =
+    bzx2d_mul_scalar_dpoint ((t1 - t0 - t0) * t1 + (t0 * t0),
+                             gcurve.pt1);
+  const bzx2d_opoint pt2 = bzx2d_eval_geocurve2 (gcurve, t1);
+  const bzx2d_geocurve2 result = {
+    .pt0 = pt0,
+    .pt1 = pt1,
+    .pt2 = pt2,
+    .t0 = t0,
+    .t1 = t1
+  };
+ return result;
+}
+
+BZX2D_CONST bzx2d_parameter_pair
+bzx2d_segment_parameters (const bzx2d_opoint a0,
+                          const bzx2d_opoint a1,
+                          const bzx2d_opoint b0,
+                          const bzx2d_opoint b1)
+{
+  //
+  // Do the line segments (a0,a1) and (b0,b1) intersect? If so, return
+  // t-parameters, elements of [0.0,1.0], for the point of
+  // intersection, as if the segments were parametric splines of
+  // degree 1. Otherwise return parameter values -1.0 and -1.0.
+  //
+
+  const double axdiff = a1.x - a0.x;
+  const double aydiff = a1.y - a0.y;
+  const double bxdiff = b1.x - b0.x;
+  const double bydiff = b1.y - b0.y;
+
+  const double denom = (axdiff * bydiff) - (aydiff * bxdiff);
+
+  const double ta1 =
+    ((bxdiff * a0.y) - (bydiff * a0.x)
+     + (b0.x * b1.y) - (b1.x * b0.y)) / denom;
+  if (bzx2d_between_0_and_1 (ta1))
+    {
+      const double tb1 =
+        (-((axdiff * b0.y) - (aydiff * b0.x)
+           + (a0.x * a1.y) - (a1.x * a0.y))) / denom;
+      if (bzx2d_between_0_and_1 (tb1))
+        {
+          const bzx2d_parameter_pair result = {
+            .ta = ta1,
+            .tb = tb1
+          };
+          return result;
+        }
+      else
+        {
+          const bzx2d_parameter_pair result = {
+            .ta = -1.0,
+            .tb = -1.0
+          };
+          return result;
+        }
+    }
+  else
+    {
+      const bzx2d_parameter_pair result = {
+        .ta = -1.0,
+        .tb = -1.0
+      };
+      return result;
+    }
 }
 
 #endif // BEZIER_INTERSECTION_2D_H__INCLUDED__
