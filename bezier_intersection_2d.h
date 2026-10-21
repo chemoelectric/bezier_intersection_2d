@@ -91,6 +91,12 @@
 #  endif
 #endif
 
+#ifdef NAN
+#  define BZX2D_NAN NAN
+#else
+#  define BZX2D_NAN (nan (""))
+#endif
+
 //----------------------------------------------------------------------
 
 typedef struct
@@ -202,6 +208,26 @@ typedef struct
   const double c, d;
 } bzx2d_affine_projection;
 
+typedef enum {
+  bzx2d_clip_everywhere,
+  bzx2d_clip_nowhere,
+  bzx2d_clip_left_and_right
+} bzx2d_clipping_places;
+
+typedef struct
+{
+  bzx2d_clipping_places where;
+  double t_lft;
+  double t_rgt;
+} bzx2d_clipping_plan;
+
+typedef struct
+{
+  const size_t ncrossings;
+  const double tcrossings[4];
+  const double dcrossings[4];
+} bzx2d_crossings;
+
 //----------------------------------------------------------------------
 
 BZX2D_PRIVATE bool
@@ -235,22 +261,24 @@ bzx2d_quadratic_formula (const double a,
           // to do with that. There may be no solution, or there may
           // be infinitely many solutions. Let us treat it as having
           // no USEFUL solutions.
+          const double nan_ = (double) BZX2D_NAN;
           const bzx2d_quadratic_formula_result result = {
             .has_smaller = false,
             .has_larger = false,
-            .smaller = nan (""),
-            .larger = nan ("")
+            .smaller = nan_,
+            .larger = nan_
           };
           return result;
         }
       else
         {
           // The equation is linear. There truly is only one root.
+          const double nan_ = (double) BZX2D_NAN;
           const bzx2d_quadratic_formula_result result = {
             .has_smaller = true,
             .has_larger = false,
             .smaller = -c / b,
-            .larger = nan ("")
+            .larger = nan_
           };
           return result;
         }
@@ -285,11 +313,12 @@ bzx2d_quadratic_formula (const double a,
         {
           // The solutions are complex conjugates, but we are
           // interested only in real solutions.
+          const double nan_ = (double) BZX2D_NAN;
           const bzx2d_quadratic_formula_result result = {
             .has_smaller = false,
             .has_larger = false,
-            .smaller = nan (""),
-            .larger = nan ("")
+            .smaller = nan_,
+            .larger = nan_
           };
           return result;
         }
@@ -571,6 +600,222 @@ bzx2d_fat_line_bounds (const bzx2d_geocurve2 projected_clipper)
     .max = fmax (d1, d2)
   };
   return result;
+}
+
+BZX2D_PRIVATE bool
+bzx2d_outside_of_bounds (const bzx2d_geocurve2 projected_clippehend,
+                         const bzx2d_double_interval d)
+{
+  //
+  // (1-t)*t is bounded on [0,1] by 0 and 1/4. Use that fact to make
+  // padding for a simple (although not especially tight) bounds on y.
+  //
+  const double dy = fabs (projected_clippehend.pt1.dy) / 4.0;
+  const double ymin =
+    -dy + fmin (projected_clippehend.pt0.y, projected_clippehend.pt2.y);
+  const double ymax =
+    dy + fmax (projected_clippehend.pt0.y, projected_clippehend.pt2.y);
+  return (ymax <= d.min || d.max <= ymin);
+}
+
+BZX2D_PRIVATE bzx2d_crossings
+bzx2d_make_crossings (void)
+{
+  const double nan_ = (double) BZX2D_NAN;
+  const bzx2d_crossings result = {
+    .ncrossings = 0,
+    .tcrossings = {
+      [0] = nan_,
+      [1] = nan_,
+      [2] = nan_,
+      [3] = nan_
+    },
+    .dcrossings = {
+      [0] = nan_,
+      [1] = nan_,
+      [2] = nan_,
+      [3] = nan_
+    }
+  };
+  return result;
+}
+
+BZX2D_PRIVATE bzx2d_crossings
+bzx2d_add_crossing (const double t,
+                    const double yvalue,
+                    const bzx2d_crossings crossings0)
+{
+  switch (crossings0.ncrossings)
+    {
+    case 0:
+      {
+        const bzx2d_crossings crossings1 = {
+          .ncrossings = 1,
+          .tcrossings = {
+            [0] = t,
+            [1] = crossings0.tcrossings[1],
+            [2] = crossings0.tcrossings[2],
+            [3] = crossings0.tcrossings[3]
+          },
+          .dcrossings = {
+            [0] = yvalue,
+            [1] = crossings0.dcrossings[1],
+            [2] = crossings0.dcrossings[2],
+            [3] = crossings0.dcrossings[3]
+          }
+        };
+        return crossings1;
+      }
+    case 1:
+      {
+        const bzx2d_crossings crossings1 = {
+          .ncrossings = 2,
+          .tcrossings = {
+            [0] = crossings0.tcrossings[0],
+            [1] = t,
+            [2] = crossings0.tcrossings[2],
+            [3] = crossings0.tcrossings[3]
+          },
+          .dcrossings = {
+            [0] = crossings0.dcrossings[0],
+            [1] = yvalue,
+            [2] = crossings0.dcrossings[2],
+            [3] = crossings0.dcrossings[3]
+          }
+        };
+        return crossings1;
+      }
+    case 2:
+      {
+        const bzx2d_crossings crossings1 = {
+          .ncrossings = 3,
+          .tcrossings = {
+            [0] = crossings0.tcrossings[0],
+            [1] = crossings0.tcrossings[1],
+            [2] = t,
+            [3] = crossings0.tcrossings[3]
+          },
+          .dcrossings = {
+            [0] = crossings0.dcrossings[0],
+            [1] = crossings0.dcrossings[1],
+            [2] = yvalue,
+            [3] = crossings0.dcrossings[3]
+          }
+        };
+        return crossings1;
+      }
+    case 3:
+      {
+        const bzx2d_crossings crossings1 = {
+          .ncrossings = 4,
+          .tcrossings = {
+            [0] = crossings0.tcrossings[0],
+            [1] = crossings0.tcrossings[1],
+            [2] = crossings0.tcrossings[2],
+            [3] = t
+          },
+          .dcrossings = {
+            [0] = crossings0.dcrossings[0],
+            [1] = crossings0.dcrossings[1],
+            [2] = crossings0.dcrossings[2],
+            [3] = yvalue
+          }
+        };
+        return crossings1;
+      }
+    default:
+      // Programmer error.
+      abort ();
+    }
+}
+
+BZX2D_PRIVATE bzx2d_crossings
+bzx2d_find_crossings (const double c0,
+                      const double c1,
+                      const double c2,
+                      const double yvalue,
+                      const bzx2d_crossings crossings0)
+{
+  const bzx2d_quadratic_formula_result roots =
+    bzx2d_quadratic_formula (-c1, c1 + c2 - c0, c0 - yvalue);
+  const bzx2d_crossings crossings1 =
+    BZX2D_CHOOSE ((roots.has_smaller *
+                   bzx2d_between_0_and_1 (roots.smaller)),
+                  bzx2d_add_crossing (roots.smaller, yvalue,
+                                      crossings0),
+                  crossings0);
+  const bzx2d_crossings crossings2 =    
+    BZX2D_CHOOSE ((roots.has_larger *
+                   bzx2d_between_0_and_1 (roots.larger)),
+                  bzx2d_add_crossing (roots.larger, yvalue,
+                                      crossings1),
+                  crossings1);
+  return crossings2;
+}
+
+BZX2D_PRIVATE bzx2d_clipping_plan
+bzx2d_create_a_clipping_plan (const bzx2d_crossings crossings)
+{
+  //
+  // For simplicity, there is just one situation in which we will
+  // clip: when there is one crossing of d.min and one crossing of
+  // d.max.
+  //
+  if (crossings.ncrossings == 2
+      && crossings.dcrossings[0] != crossings.dcrossings[1])
+    {
+      const bzx2d_clipping_plan result = {
+        .where = bzx2d_clip_left_and_right,
+        .t_lft = fmin (crossings.tcrossings[0],
+                       crossings.tcrossings[1]),
+        .t_rgt = fmax (crossings.tcrossings[0],
+                       crossings.tcrossings[1])
+      };
+      return result;
+    }
+  else
+    {
+      const double nan_ = (double) BZX2D_NAN;
+      const bzx2d_clipping_plan result = {
+        .where = bzx2d_clip_nowhere,
+        .t_lft = nan_,
+        .t_rgt = nan_
+      };
+      return result;
+    }
+}
+
+BZX2D_PRIVATE bzx2d_clipping_plan
+bzx2d_analyze_and_plan (const bzx2d_geocurve2 projected_clippehend,
+                        const bzx2d_double_interval d)
+{
+  const double c0 = projected_clippehend.pt0.y;
+  const double c1 = projected_clippehend.pt1.dy;
+  const double c2 = projected_clippehend.pt2.y;
+  const bzx2d_crossings crossings0 = bzx2d_make_crossings ();
+  const bzx2d_crossings crossings1 =
+    bzx2d_find_crossings (c0, c1, c2, d.min, crossings0);
+  const bzx2d_crossings crossings2 =
+    bzx2d_find_crossings (c0, c1, c2, d.max, crossings1);
+  return bzx2d_create_a_clipping_plan (crossings2);
+}
+
+BZX2D_PRIVATE bzx2d_clipping_plan
+bzx2d_make_clipping_plan (const bzx2d_geocurve2 projected_clippehend,
+                          const bzx2d_double_interval d)
+{
+  if (bzx2d_outside_of_bounds (projected_clippehend, d))
+    {
+      const double nan_ = (double) BZX2D_NAN;
+      const bzx2d_clipping_plan result = {
+        .where = bzx2d_clip_everywhere,
+        .t_lft = nan_,
+        .t_rgt = nan_
+      };
+      return result;
+    }
+  else
+    return bzx2d_analyze_and_plan (projected_clippehend, d);
 }
 
 #endif // BEZIER_INTERSECTION_2D_H__INCLUDED__
